@@ -1,0 +1,685 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#18201D">
+<meta name="description" content="Converts foods and grams to raciones (10 g carbohydrate) and works out rapid-insulin units from a set plan.">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Carb &amp; Insulin Calculator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+/* Layout: one narrow phone column — meal, glucose, foods, then the dose; a sticky bottom bar always shows R and units. */
+:root{
+  --bg:#F5F7F6; --surface:#FFFFFF; --sunk:#ECF0EE; --line:#D3DBD7; --fg:#18201D; --muted:#5B6863;
+  --accent:#A63A22; --accent-ink:#FFFFFF; --accent-soft:#F6E3DE;
+  --ok:#2F6B3A; --ok-soft:#E1EFE2; --warn:#8A5A00; --warn-soft:#FBF0D6; --bad:#B3261E; --bad-soft:#FBE3E1;
+  --font-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --font-body:"Atkinson Hyperlegible","Segoe UI",system-ui,-apple-system,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121614; --surface:#1B201E; --sunk:#232A27; --line:#33403B; --fg:#E7ECEA; --muted:#9BA9A3;
+  --accent:#E2785C; --accent-ink:#1B0E09; --accent-soft:#3A221B;
+  --ok:#7FC48A; --ok-soft:#1E3122; --warn:#E3B45A; --warn-soft:#352A13; --bad:#F2867D; --bad-soft:#3A1D1B; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121614; --surface:#1B201E; --sunk:#232A27; --line:#33403B; --fg:#E7ECEA; --muted:#9BA9A3;
+  --accent:#E2785C; --accent-ink:#1B0E09; --accent-soft:#3A221B;
+  --ok:#7FC48A; --ok-soft:#1E3122; --warn:#E3B45A; --warn-soft:#352A13; --bad:#F2867D; --bad-soft:#3A1D1B; color-scheme:dark}
+
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:16px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 120px}
+.wrap{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:18px;padding-top:18px}
+.view{display:flex;flex-direction:column;gap:18px;min-width:0}
+.view > *,.wrap > *{min-width:0}
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:12px}
+h1{font-family:var(--font-display);font-weight:800;font-size:28px;line-height:1;margin:0;letter-spacing:-.01em}
+h1 small{display:block;font-family:var(--font-body);font-weight:400;font-size:13px;color:var(--muted);letter-spacing:0;margin-top:6px}
+h2{font-family:var(--font-display);font-weight:600;font-size:17px;margin:0}
+.lang{display:flex;border:1px solid var(--line);border-radius:999px;overflow:hidden;flex-shrink:0}
+.lang button{border:0;background:transparent;color:var(--muted);font:700 13px var(--font-body);padding:6px 11px;cursor:pointer}
+.lang button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+
+nav.tabs{display:grid;grid-template-columns:repeat(3,1fr);background:var(--sunk);border-radius:12px;padding:4px;gap:4px}
+nav.tabs button{border:0;background:transparent;color:var(--muted);font:700 14px var(--font-body);padding:9px 4px;border-radius:9px;cursor:pointer}
+nav.tabs button[aria-selected="true"]{background:var(--surface);color:var(--fg);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+
+section.block{display:flex;flex-direction:column;gap:10px}
+.label{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);background:var(--surface);color:var(--fg);font:700 15px var(--font-body);padding:9px 14px;border-radius:999px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.chip small{font-weight:400;opacity:.8}
+
+.field{display:flex;align-items:center;gap:10px;background:var(--surface);border:1.5px solid var(--line);border-radius:12px;padding:4px 12px}
+.field:focus-within{border-color:var(--accent)}
+.field.need{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.needtag{font-size:13px;font-weight:700;color:var(--accent);white-space:nowrap}
+.ask{display:flex;flex-direction:column;gap:10px;background:var(--accent-soft);border-radius:12px;padding:12px 14px}
+.ask b{color:var(--accent);font-size:15.5px}
+.ask .btn{align-self:flex-start;background:var(--accent);color:var(--accent-ink)}
+.field input{flex:1;min-width:0;border:0;background:transparent;color:var(--fg);font:700 22px var(--font-display);padding:8px 0;outline:none;font-variant-numeric:tabular-nums}
+.field .unit{color:var(--muted);font-weight:700}
+.gstate{font-size:14px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.g-low{background:var(--bad-soft);color:var(--bad)} .g-ok{background:var(--ok-soft);color:var(--ok)} .g-high{background:var(--warn-soft);color:var(--warn)}
+
+.search{position:relative}
+.search .field input{font:400 17px var(--font-body)}
+.results{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1.5px solid var(--line);border-radius:12px;max-height:320px;overflow-y:auto;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.results button{display:flex;justify-content:space-between;gap:12px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--fg);font:400 15px var(--font-body);padding:11px 14px;cursor:pointer}
+.results button:last-child{border-bottom:0}
+.results button:hover,.results button:focus{background:var(--sunk);outline:none}
+.results .r{color:var(--muted);white-space:nowrap;font-size:13px}
+.results .cat{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 14px 4px;background:var(--sunk)}
+
+.items{display:flex;flex-direction:column;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
+.item{display:grid;grid-template-columns:1fr auto auto;gap:10px;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+.item:last-child{border-bottom:0}
+.item .name{min-width:0}
+.item .name b{display:block;font-size:15px}
+.item .name span{font-size:12.5px;color:var(--muted)}
+.qty{display:flex;align-items:center;gap:4px;background:var(--sunk);border-radius:9px;padding:2px 8px}
+.qty input{width:58px;border:0;background:transparent;color:var(--fg);font:700 17px var(--font-body);text-align:right;padding:6px 0;outline:none;font-variant-numeric:tabular-nums}
+.qty span{font-size:13px;color:var(--muted)}
+.rcell{display:flex;align-items:center;gap:6px}
+.rval{font:800 17px var(--font-display);min-width:44px;text-align:right;font-variant-numeric:tabular-nums}
+.rval.free{color:var(--ok);font-size:13px;font-family:var(--font-body)}
+.x{border:0;background:transparent;color:var(--muted);font-size:20px;line-height:1;cursor:pointer;padding:4px 6px;border-radius:6px}
+.x:hover{color:var(--bad)}
+.empty{padding:18px 14px;color:var(--muted);font-size:14px;text-align:center}
+.examplebar{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:700;padding:8px 12px}
+.linkbtn{border:0;background:transparent;color:var(--accent);font:700 14px var(--font-body);cursor:pointer;padding:4px 0;text-decoration:underline;text-underline-offset:3px}
+
+details.custom{background:var(--surface);border:1.5px dashed var(--line);border-radius:12px;padding:10px 12px}
+details.custom summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--accent)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.grid2 .wide{grid-column:1/-1}
+.mini{display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:var(--muted)}
+.mini input{border:1.5px solid var(--line);background:var(--bg);color:var(--fg);border-radius:9px;font:700 16px var(--font-body);padding:8px 10px;width:100%;min-width:0}
+.btn{border:0;background:var(--fg);color:var(--bg);font:700 15px var(--font-body);padding:11px 16px;border-radius:10px;cursor:pointer}
+.btn.secondary{background:var(--sunk);color:var(--fg)}
+
+.dose{background:var(--surface);border:2px solid var(--fg);border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:12px}
+.dose-top{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.big{font:800 56px/0.9 var(--font-display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.big small{font-size:20px;font-weight:600;letter-spacing:0;margin-left:4px}
+.dose-sub{font-size:13px;color:var(--muted)}
+.calc{display:flex;flex-direction:column;border-top:1px solid var(--line);padding-top:8px}
+.calc div{display:flex;justify-content:space-between;gap:12px;padding:5px 0;font-size:14.5px;font-variant-numeric:tabular-nums}
+.calc div span:last-child{font-weight:700;white-space:nowrap}
+.calc .tot{border-top:1.5px solid var(--fg);margin-top:4px;padding-top:8px;font-size:16px}
+.note{border-radius:12px;padding:11px 13px;font-size:14px;display:flex;flex-direction:column;gap:4px}
+.note b{font-size:14.5px}
+.note.bad{background:var(--bad-soft);color:var(--bad)}
+.note.warn{background:var(--warn-soft);color:var(--warn)}
+.note.info{background:var(--sunk);color:var(--fg)}
+.foot{font-size:12.5px;color:var(--muted);display:flex;flex-direction:column;gap:6px}
+.foot a{color:var(--muted)}
+
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--fg);color:var(--bg);z-index:8;
+  padding:12px max(16px,env(safe-area-inset-right,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.bar-in{max-width:560px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.bar .k{font-size:12px;opacity:.75;text-transform:uppercase;letter-spacing:.08em}
+.bar .v{font:800 26px var(--font-display);font-variant-numeric:tabular-nums}
+.bar .v.dosev{color:var(--accent-soft)}
+
+table.set{width:100%;border-collapse:collapse;font-size:14.5px}
+table.set td,table.set th{padding:7px 6px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+table.set th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700}
+table.set input{width:72px;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;font:700 15px var(--font-body);padding:6px 8px;font-variant-numeric:tabular-nums}
+.tablewrap{overflow-x:auto;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:4px 10px}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.check{display:flex;align-items:center;gap:10px;font-size:15px}
+.check input{width:22px;height:22px;accent-color:var(--accent)}
+button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+@media (prefers-reduced-motion: no-preference){.big{transition:color .2s}}
+</style>
+<style>
+html{-webkit-text-size-adjust:100%}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+body{margin:0}
+</style>
+</head>
+<body>
+
+
+<div class="wrap">
+  <header>
+    <h1><span data-t="title">Raciones e insulina</span><small data-t="subtitle">Pauta del 19 oct 2026</small></h1>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button id="tab-meal" role="tab" aria-selected="true" data-t="tabMeal">Comida</button>
+    <button id="tab-corr" role="tab" aria-selected="false" data-t="tabCorr">Corrección</button>
+    <button id="tab-set" role="tab" aria-selected="false" data-t="tabSet">Ajustes</button>
+  </nav>
+
+  <!-- MEAL -->
+  <div id="view-meal" class="view">
+    <section class="block">
+      <div class="label" data-t="whichMeal">¿Qué comida?</div>
+      <div class="chips" id="meals"></div>
+    </section>
+
+    <section class="block">
+      <div class="label" data-t="glucoseBefore">Glucemia antes de comer</div>
+      <div class="field" id="gfield">
+        <input id="glucose" inputmode="numeric" type="number" placeholder="—" aria-label="Glucemia">
+        <span class="unit">mg/dL</span>
+        <span id="gstate" class="gstate" hidden></span>
+        <span id="gneed" class="needtag" data-t="needTag">Falta</span>
+      </div>
+    </section>
+
+    <section class="block">
+      <div class="label" data-t="foods">Alimentos</div>
+      <div class="search">
+        <div class="field"><input id="q" type="search" autocomplete="off" data-tp="searchPh" placeholder="Buscar alimento (pan, leche, kiwi…)"></div>
+        <div id="results" class="results" hidden></div>
+      </div>
+      <div class="items" id="items"></div>
+      <details class="custom" id="customBox">
+        <summary data-t="customTitle">Añadir desde la etiqueta</summary>
+        <div class="grid2">
+          <label class="mini wide"><span data-t="customName">Nombre</span><input id="c-name" type="text" data-tp="customNamePh" placeholder="p. ej. wrap de trigo"></label>
+          <label class="mini"><span data-t="customCarbs">Hidratos por 100 g</span><input id="c-carbs" type="number" inputmode="decimal" placeholder="45"></label>
+          <label class="mini"><span data-t="customGrams">Cantidad (g)</span><input id="c-grams" type="number" inputmode="decimal" placeholder="60"></label>
+          <div class="wide"><button class="btn" id="c-add" type="button" data-t="customAdd">Añadir</button></div>
+        </div>
+      </details>
+    </section>
+
+    <section class="dose" id="dose" aria-live="polite"></section>
+    <div id="notes" class="block"></div>
+  </div>
+
+  <!-- BETWEEN-MEAL CORRECTION -->
+  <div id="view-corr" class="view" hidden>
+    <div class="note info"><b data-t="corrHead">Corrección fuera de las comidas</b><span data-t="corrBody">Solo si han pasado al menos 3 horas desde la última insulina rápida. 1 unidad de Humalog Junior baja unos 100 mg/dL (factor de sensibilidad).</span></div>
+    <section class="block">
+      <div class="label" data-t="glucoseNow">Glucemia ahora</div>
+      <div class="field"><input id="cg" type="number" inputmode="numeric" placeholder="300"><span class="unit">mg/dL</span></div>
+    </section>
+    <div class="grid2">
+      <label class="mini"><span data-t="target">Objetivo (mg/dL)</span><input id="ctarget" type="number" inputmode="numeric" value="100"></label>
+      <label class="mini"><span data-t="hours">Horas desde la última rápida</span><input id="chours" type="number" inputmode="decimal" placeholder="3"></label>
+    </div>
+    <section class="dose" id="cdose" aria-live="polite"></section>
+  </div>
+
+  <!-- SETTINGS -->
+  <div id="view-set" class="view" hidden>
+    <div class="note info"><span data-t="setIntro">Valores de la pauta. Cámbialos solo cuando el equipo médico cambie la pauta. Se guardan en este teléfono.</span></div>
+    <div class="label" data-t="setMeals">Comidas principales</div>
+    <div class="tablewrap"><table class="set" id="set-meals"></table></div>
+    <div class="label" data-t="setSnacks">Almuerzo y merienda</div>
+    <div class="tablewrap"><table class="set" id="set-snacks"></table></div>
+    <div class="label" data-t="setCorr">Correcciones antes de comer</div>
+    <div class="tablewrap"><table class="set" id="set-corr"></table></div>
+    <div class="grid2">
+      <label class="mini"><span data-t="setISF">Factor de sensibilidad (mg/dL por unidad)</span><input id="s-isf" type="number" inputmode="numeric"></label>
+      <label class="mini"><span data-t="setStep">Redondeo de la dosis (unidades)</span><input id="s-step" type="number" inputmode="decimal" step="0.5"></label>
+    </div>
+    <label class="check"><input type="checkbox" id="s-snackcorr"><span data-t="setSnackCorr">Aplicar también la tabla de correcciones en almuerzo y merienda</span></label>
+    <div class="row"><button class="btn" id="s-save" type="button" data-t="save">Guardar</button><button class="btn secondary" id="s-reset" type="button" data-t="reset">Volver a la pauta del 19/10</button></div>
+    <div id="s-msg" class="dose-sub"></div>
+  </div>
+
+  <div class="foot">
+    <span data-t="footSrc">Raciones (1 R = 10 g de hidratos): tabla de la Fundación para la Diabetes (Serafín Murillo) y tabla de HM Nens cuando difieren. Pesos en crudo o cocido según se indica; fruta sin piel ni hueso.</span>
+    <span data-t="footSafe">Herramienta de ayuda al cálculo, no sustituye al equipo médico. Comprueba siempre el resultado antes de inyectar.</span>
+  </div>
+</div>
+
+<div class="bar" role="status">
+  <div class="bar-in">
+    <div><div class="k" data-t="barR">Raciones</div><div class="v" id="barR">0</div></div>
+    <div style="text-align:right"><div class="k" id="barMeal">—</div><div class="v dosev" id="barU">—</div></div>
+  </div>
+</div>
+
+<script>
+(function(){
+"use strict";
+// ---------- FOOD DATABASE: [key, es, en, grams per ración (0 = sin hidratos), unit, category, source, hint es, hint en, default qty]
+// Source: FD = Fundación para la Diabetes (Serafín Murillo); HM = HM Nens sheet; EST = estimate from composition.
+const F = [
+ // Pan y cereales
+ ["pan_blanco","Pan blanco (barra)","White bread (baguette)",20,"g","pan","HM","3 cm de barra ≈ 20 g","3 cm of baguette ≈ 20 g",40],
+ ["pan_integral","Pan integral","Whole-wheat bread",20,"g","pan","HM","1 rebanada ≈ 25 g","1 slice ≈ 25 g",40],
+ ["pan_molde","Pan de molde","Sliced sandwich bread",20,"g","pan","FD","1 rebanada ≈ 25 g","1 slice ≈ 25 g",50],
+ ["pan_centeno","Pan de centeno","Rye bread",20,"g","pan","FD","","",40],
+ ["pan_hamb","Pan de hamburguesa / Frankfurt","Burger / hot-dog bun",18,"g","pan","FD","1 unidad ≈ 80 g","1 bun ≈ 80 g",80],
+ ["biscote","Pan tostado / biscote","Toast / rusk (biscotte)",15,"g","pan","HM","1 biscote ≈ 10 g","1 rusk ≈ 10 g",20],
+ ["picos","Picos / palitos de pan","Breadsticks",15,"g","pan","FD","3 palitos ≈ 15 g","3 sticks ≈ 15 g",15],
+ ["tortilla_maiz","Tortilla de maíz","Corn tortilla",22,"g","pan","EST","1 unidad ≈ 25–30 g","1 tortilla ≈ 25–30 g",30],
+ ["maria","Galletas María","Marie biscuits",15,"g","pan","HM","1 galleta ≈ 6–7 g","1 biscuit ≈ 6–7 g",20],
+ ["digestive","Galleta digestiva","Digestive biscuit",16,"g","pan","FD","1 galleta ≈ 11 g","1 biscuit ≈ 11 g",22],
+ ["cereales","Cereales de desayuno","Breakfast cereal",15,"g","pan","HM","","",30],
+ ["allbran","Cereales ricos en fibra (All-Bran)","High-fibre cereal (All-Bran)",20,"g","pan","FD","","",30],
+ ["avena","Copos de avena","Oat flakes",20,"g","pan","HM","","",40],
+ ["muesli","Muesli","Muesli",15,"g","pan","FD","","",40],
+ ["arroz_crudo","Arroz (crudo)","Rice (raw)",12,"g","cereal","HM","pesar antes de cocer","weigh before cooking",60],
+ ["arroz_cocido","Arroz (cocido)","Rice (cooked)",35,"g","cereal","HM","","",150],
+ ["arroz_int","Arroz integral (cocido)","Brown rice (cooked)",40,"g","cereal","FD","","",150],
+ ["pasta_cruda","Pasta (cruda)","Pasta (dry)",15,"g","cereal","HM","pesar antes de cocer","weigh before cooking",75],
+ ["pasta_cocida","Pasta (cocida)","Pasta (cooked)",45,"g","cereal","HM","","",225],
+ ["cuscus","Cuscús (cocido)","Couscous (cooked)",65,"g","cereal","FD","","",130],
+ ["quinoa","Quinoa (cocida)","Quinoa (cooked)",48,"g","cereal","FD","","",100],
+ ["harina","Harina de trigo o maíz","Wheat or corn flour",15,"g","cereal","FD","1 cucharada rasa ≈ 14 g","1 level tbsp ≈ 14 g",15],
+ ["pan_rallado","Pan rallado","Breadcrumbs",15,"g","cereal","FD","","",15],
+ ["palomitas","Palomitas","Popcorn",20,"g","cereal","FD","","",20],
+ ["pizza","Pizza","Pizza",40,"g","cereal","FD","1/4 de pizza ≈ 100 g","1/4 pizza ≈ 100 g",100],
+ // Legumbres y tubérculos
+ ["lentejas_c","Lentejas (cocidas)","Lentils (cooked)",50,"g","legumbre","HM","","",200],
+ ["lentejas_cr","Lentejas (crudas)","Lentils (dry)",20,"g","legumbre","HM","","",60],
+ ["garbanzos_c","Garbanzos (cocidos)","Chickpeas (cooked)",50,"g","legumbre","HM","","",200],
+ ["judias_b","Judías blancas (cocidas)","White beans (cooked)",50,"g","legumbre","HM","","",200],
+ ["guisantes","Guisantes","Peas",100,"g","legumbre","FD","","",100],
+ ["maiz","Maíz dulce (lata)","Sweetcorn (tin)",50,"g","legumbre","FD","","",50],
+ ["patata_herv","Patata hervida","Boiled potato",50,"g","patata","HM","","",150],
+ ["patata_asada","Patata asada / al horno","Roast / baked potato",35,"g","patata","FD","","",100],
+ ["patata_frita","Patatas fritas (de sartén)","Chips / French fries",30,"g","patata","HM","guarnición ≈ 60 g","side ≈ 60 g",60],
+ ["chips","Patatas chips (bolsa)","Crisps",20,"g","patata","FD","bolsa pequeña ≈ 30 g","small bag ≈ 30 g",30],
+ ["pure","Puré de patata con leche","Mashed potato (with milk)",80,"g","patata","FD","","",150],
+ ["boniato","Boniato","Sweet potato",50,"g","patata","FD","","",100],
+ // Lácteos
+ ["leche","Leche (entera, semi o desnatada)","Milk (any)",200,"ml","lacteo","HM","1 vaso = 200 ml","1 glass = 200 ml",200],
+ ["yog_nat","Yogur natural","Plain yogurt",250,"g","lacteo","HM","1 yogur (125 g) = 0,5 R","1 pot (125 g) = 0.5 R",125],
+ ["yog_griego","Yogur griego natural","Plain Greek yogurt",250,"g","lacteo","EST","1 yogur (125 g) ≈ 0,5 R","1 pot (125 g) ≈ 0.5 R",125],
+ ["yog_azuc","Yogur de sabores / azucarado","Flavoured / sweetened yogurt",83,"g","lacteo","HM","1 yogur (125 g) = 1,5 R","1 pot (125 g) = 1.5 R",125],
+ ["kefir","Kéfir","Kefir",200,"ml","lacteo","FD","","",125],
+ ["queso_fresco","Queso fresco (Burgos)","Fresh cheese (Burgos)",250,"g","lacteo","FD","","",70],
+ ["cottage","Requesón / cottage cheese","Cottage cheese",300,"g","lacteo","EST","","",100],
+ ["petit","Petit suisse","Petit suisse",70,"g","lacteo","FD","1 unidad ≈ 55 g","1 pot ≈ 55 g",55],
+ ["batido","Batido de cacao","Chocolate milk",100,"ml","lacteo","FD","1 brick = 200 ml","1 carton = 200 ml",200],
+ ["flan","Flan","Crème caramel",50,"g","dulce","FD","1 unidad ≈ 125 g","1 pot ≈ 125 g",125],
+ ["natillas","Natillas","Custard pot",50,"g","dulce","FD","1 unidad ≈ 125 g","1 pot ≈ 125 g",125],
+ ["helado","Helado de crema","Ice cream",50,"g","dulce","FD","1 bola ≈ 100 g","1 scoop ≈ 100 g",100],
+ // Fruta
+ ["manzana","Manzana","Apple",100,"g","fruta","HM","pesar sin corazón","weigh without core",150],
+ ["pera","Pera","Pear",100,"g","fruta","HM","","",150],
+ ["naranja","Naranja","Orange",100,"g","fruta","HM","pesar pelada","weigh peeled",150],
+ ["mandarina","Mandarina","Mandarin / clementine",100,"g","fruta","FD","pesar pelada","weigh peeled",100],
+ ["melocoton","Melocotón","Peach",100,"g","fruta","HM","pesar sin hueso","weigh without stone",150],
+ ["nectarina","Nectarina / paraguayo","Nectarine / flat peach",100,"g","fruta","FD","","",100],
+ ["kiwi","Kiwi verde","Green kiwi",100,"g","fruta","HM","pesar pelado","weigh peeled",100],
+ ["kiwi_gold","Kiwi amarillo (gold)","Gold kiwi",85,"g","fruta","EST","pesar pelado","weigh peeled",90],
+ ["platano","Plátano","Banana",50,"g","fruta","HM","pesar pelado","weigh peeled",100],
+ ["uva","Uva","Grapes",50,"g","fruta","HM","12 uvas ≈ 100 g","12 grapes ≈ 100 g",100],
+ ["fresas","Fresas / fresones","Strawberries",200,"g","fruta","HM","sin el rabito","tops removed",200],
+ ["frambuesas","Frambuesas","Raspberries",200,"g","fruta","HM","","",100],
+ ["arandanos","Arándanos","Blueberries",100,"g","fruta","FD","","",100],
+ ["moras","Moras","Blackberries",150,"g","fruta","FD","","",100],
+ ["cerezas","Cerezas","Cherries",100,"g","fruta","FD","12 cerezas ≈ 100 g","12 cherries ≈ 100 g",100],
+ ["ciruela","Ciruela","Plum",100,"g","fruta","FD","","",100],
+ ["mango","Mango","Mango",100,"g","fruta","FD","pesar sin piel ni hueso","weigh peeled, no stone",100],
+ ["pina","Piña","Pineapple",100,"g","fruta","FD","2 rodajas ≈ 100 g","2 slices ≈ 100 g",100],
+ ["melon","Melón","Melon",200,"g","fruta","HM","sin piel","no rind",200],
+ ["sandia","Sandía","Watermelon",200,"g","fruta","HM","sin piel","no rind",200],
+ ["higo","Higo fresco","Fresh fig",100,"g","fruta","FD","","",100],
+ ["albaricoque","Albaricoque","Apricot",150,"g","fruta","FD","","",100],
+ ["granada","Granada","Pomegranate",70,"g","fruta","FD","","",70],
+ ["papaya","Papaya","Papaya",125,"g","fruta","FD","","",125],
+ ["chirimoya","Chirimoya","Custard apple",50,"g","fruta","FD","","",100],
+ ["datil","Dátiles","Dates",15,"g","fruta","FD","1 dátil ≈ 10 g","1 date ≈ 10 g",15],
+ ["pasas","Uvas pasas","Raisins",15,"g","fruta","FD","","",15],
+ ["melo_alm","Melocotón en almíbar","Tinned peach in syrup",50,"g","fruta","FD","","",50],
+ // Verdura
+ ["zanahoria","Zanahoria cruda","Raw carrot",150,"g","verdura","HM","","",70],
+ ["zanahoria_h","Zanahoria hervida","Boiled carrot",200,"g","verdura","FD","","",100],
+ ["calabaza","Calabaza","Pumpkin / squash",200,"g","verdura","HM","","",200],
+ ["acelga","Acelgas","Swiss chard",200,"g","verdura","HM","","",200],
+ ["judia_v","Judías verdes","Green beans",250,"g","verdura","HM","","",200],
+ ["berenjena","Berenjena","Aubergine",400,"g","verdura","HM","","",200],
+ ["brocoli","Brócoli","Broccoli",400,"g","verdura","HM","","",200],
+ ["coliflor","Coliflor","Cauliflower",400,"g","verdura","HM","","",200],
+ ["coles_b","Coles de Bruselas","Brussels sprouts",300,"g","verdura","FD","","",150],
+ ["calabacin","Calabacín","Courgette",500,"g","verdura","HM","","",150],
+ ["tomate","Tomate","Tomato",300,"g","verdura","HM","","",150],
+ ["espinacas","Espinacas","Spinach",1000,"g","verdura","HM","","",200],
+ ["cebolla","Cebolla","Onion",150,"g","verdura","FD","","",50],
+ ["pimiento","Pimiento","Pepper",300,"g","verdura","FD","","",100],
+ ["pepino","Pepino","Cucumber",300,"g","verdura","FD","","",100],
+ ["remolacha","Remolacha","Beetroot",150,"g","verdura","FD","","",80],
+ ["alcachofa","Alcachofa","Artichoke",300,"g","verdura","FD","","",150],
+ ["puerro","Puerro","Leek",300,"g","verdura","FD","","",75],
+ ["gazpacho","Gazpacho (comercial)","Gazpacho (shop-bought)",150,"ml","verdura","FD","1 vaso = 200 ml","1 glass = 200 ml",200],
+ // Frutos secos
+ ["almendras","Almendras","Almonds",150,"g","seco","FD","1 puñado ≈ 20 g","1 handful ≈ 20 g",20],
+ ["avellanas","Avellanas","Hazelnuts",150,"g","seco","FD","","",20],
+ ["cacahuetes","Cacahuetes","Peanuts",100,"g","seco","FD","","",20],
+ ["pistachos","Pistachos","Pistachios",80,"g","seco","FD","","",20],
+ ["nueces","Nueces","Walnuts",300,"g","seco","FD","","",20],
+ ["pipas","Pipas","Sunflower seeds",80,"g","seco","FD","","",15],
+ // Bebidas
+ ["zumo","Zumo de fruta (natural o de brick)","Fruit juice (fresh or carton)",100,"ml","bebida","EST","1 vaso = 200 ml","1 glass = 200 ml",200],
+ ["refresco","Refresco azucarado (cola, naranja…)","Sugary soft drink",100,"ml","bebida","FD","1 lata = 330 ml","1 can = 330 ml",330],
+ ["isotonica","Bebida isotónica","Sports drink",130,"ml","bebida","FD","","",250],
+ ["horchata","Horchata","Horchata",75,"ml","bebida","FD","","",200],
+ ["bebida_soja","Bebida de soja","Soy drink",250,"ml","bebida","FD","","",200],
+ // Dulces
+ ["glucosa","Pastillas de glucosa","Glucose tablets",10,"g","dulce","FD","","",10],
+ ["azucar","Azúcar","Sugar",10,"g","dulce","FD","1 sobre ≈ 8 g","1 sachet ≈ 8 g",8],
+ ["miel","Miel","Honey",13,"g","dulce","FD","1 cucharada ≈ 18 g","1 tbsp ≈ 18 g",18],
+ ["mermelada","Mermelada","Jam",20,"g","dulce","FD","1 cucharada ≈ 25 g","1 tbsp ≈ 25 g",20],
+ ["nocilla","Crema de cacao (Nocilla, Nutella)","Chocolate spread",25,"g","dulce","FD","1 cucharada ≈ 25 g","1 tbsp ≈ 25 g",20],
+ ["choco_leche","Chocolate con leche o blanco","Milk / white chocolate",17,"g","dulce","FD","1 onza ≈ 8 g","1 square ≈ 8 g",16],
+ ["choco_negro","Chocolate negro","Dark chocolate",25,"g","dulce","FD","1 onza ≈ 8 g","1 square ≈ 8 g",16],
+ ["croissant","Cruasán","Croissant",20,"g","dulce","FD","1 unidad ≈ 60 g","1 croissant ≈ 60 g",60],
+ ["magdalena","Magdalena","Muffin (magdalena)",25,"g","dulce","FD","1 unidad ≈ 50 g","1 muffin ≈ 50 g",50],
+ ["bizcocho","Bizcocho","Sponge cake",20,"g","dulce","FD","","",50],
+ ["donut","Donut","Doughnut",23,"g","dulce","FD","1 unidad ≈ 58 g","1 doughnut ≈ 58 g",58],
+ ["barrita","Barrita de cereales","Cereal bar",20,"g","dulce","FD","1 unidad ≈ 25 g","1 bar ≈ 25 g",25],
+ ["golosinas","Golosinas / gominolas","Sweets / gummies",18,"g","dulce","FD","","",20],
+ ["ketchup","Ketchup","Ketchup",50,"g","dulce","FD","1 cucharada ≈ 15 g","1 tbsp ≈ 15 g",15],
+ ["tomate_frito","Salsa de tomate comercial","Tomato sauce (jar)",100,"g","dulce","FD","3 cucharadas ≈ 50 g","3 tbsp ≈ 50 g",50],
+ ["tortilla_pat","Tortilla de patatas","Spanish potato omelette",120,"g","dulce","FD","1 pincho ≈ 100 g","1 slice ≈ 100 g",100],
+ ["croquetas","Croquetas","Croquettes",50,"g","dulce","FD","3 croquetas ≈ 90 g","3 croquettes ≈ 90 g",90],
+ ["sushi","Sushi","Sushi",45,"g","dulce","FD","1 pieza ≈ 20–40 g","1 piece ≈ 20–40 g",120],
+ ["lasana","Lasaña","Lasagne",100,"g","dulce","FD","","",260],
+ // Sin hidratos
+ ["aguacate","Aguacate","Avocado",0,"g","libre","FD","","",100],
+ ["carne","Carne (ternera, pollo, cerdo, cordero)","Meat (beef, chicken, pork, lamb)",0,"g","libre","FD","sin rebozar","not breaded",120],
+ ["pescado","Pescado / marisco","Fish / seafood",0,"g","libre","FD","sin rebozar","not breaded",120],
+ ["huevo","Huevo","Egg",0,"g","libre","FD","","",60],
+ ["jamon","Jamón serrano / cocido extra","Cured / cooked ham",0,"g","libre","FD","","",40],
+ ["embutido","Embutido (chorizo, salchichón, pavo)","Cured meats / turkey slices",0,"g","libre","FD","","",40],
+ ["queso_curado","Queso curado o semicurado, mozzarella","Hard / semi-hard cheese, mozzarella",0,"g","libre","FD","","",40],
+ ["aceite","Aceite de oliva","Olive oil",0,"g","libre","FD","","",10],
+ ["mantequilla","Mantequilla","Butter",0,"g","libre","FD","","",10],
+ ["nata","Nata líquida","Cream",300,"ml","libre","FD","","",50],
+ ["lechuga","Lechuga, champiñones, espárragos","Lettuce, mushrooms, asparagus",0,"g","libre","FD","","",100],
+ ["aceitunas","Aceitunas","Olives",0,"g","libre","FD","","",30],
+ ["cola_zero","Refresco sin azúcar / agua","Diet soft drink / water",0,"ml","libre","FD","","",330],
+];
+const CATS = {pan:["Pan, galletas y cereales","Bread, biscuits & cereal"],cereal:["Arroz, pasta y harinas","Rice, pasta & flour"],legumbre:["Legumbres","Pulses"],patata:["Patata","Potato"],lacteo:["Lácteos","Dairy"],fruta:["Fruta","Fruit"],verdura:["Verdura","Vegetables"],seco:["Frutos secos","Nuts"],bebida:["Bebidas","Drinks"],dulce:["Dulces y platos","Sweets & dishes"],libre:["Sin hidratos (libre)","No carbs (free)"]};
+const FOODS = {}; F.forEach(r=>{FOODS[r[0]]={key:r[0],es:r[1],en:r[2],g:r[3],unit:r[4],cat:r[5],src:r[6],hes:r[7],hen:r[8],def:r[9]}});
+
+// ---------- DEFAULT PLAN (19 Oct 2026) + ratios from the family's sheet
+const DEFAULTS = {
+  meals:{ desayuno:{u:3,r:4.5}, comida:{u:4,r:9}, cena:{u:2.5,r:6.5} },
+  snack:{ threshold:150, dose:2 },
+  corr:[ {max:85,u:-1}, {max:180,u:0}, {max:230,u:0.5}, {max:280,u:1}, {max:330,u:1.5}, {max:380,u:2}, {max:430,u:2.5}, {max:Infinity,u:3} ],
+  isf:100, step:0.5, snackCorr:false
+};
+const MEALS = [
+  {k:"desayuno",es:"Desayuno",en:"Breakfast",type:"main"},
+  {k:"almuerzo",es:"Almuerzo",en:"Mid-morning",type:"snack"},
+  {k:"comida",es:"Comida",en:"Lunch",type:"main"},
+  {k:"merienda",es:"Merienda",en:"Afternoon snack",type:"snack"},
+  {k:"cena",es:"Cena",en:"Dinner",type:"main"},
+];
+
+const T = {
+ es:{title:"Raciones e insulina",subtitle:"Pauta del 19 oct 2026",tabMeal:"Comida",tabCorr:"Corrección",tabSet:"Ajustes",whichMeal:"¿Qué comida?",glucoseBefore:"Glucemia antes de comer",foods:"Alimentos",searchPh:"Buscar alimento (pan, leche, kiwi…)",customTitle:"Añadir desde la etiqueta",customName:"Nombre",customNamePh:"p. ej. wrap de trigo",customCarbs:"Hidratos por 100 g",customGrams:"Cantidad (g)",customAdd:"Añadir",
+  corrHead:"Corrección fuera de las comidas",corrBody:"Solo si han pasado al menos 3 horas desde la última insulina rápida. 1 unidad de Humalog Junior baja unos 100 mg/dL (factor de sensibilidad).",glucoseNow:"Glucemia ahora",target:"Objetivo (mg/dL)",hours:"Horas desde la última rápida",
+  setIntro:"Valores de la pauta. Cámbialos solo cuando el equipo médico cambie la pauta. Se guardan en este teléfono.",setMeals:"Comidas principales",setSnacks:"Almuerzo y merienda",setCorr:"Correcciones antes de comer",setISF:"Factor de sensibilidad (mg/dL por unidad)",setStep:"Redondeo de la dosis (unidades)",setSnackCorr:"Aplicar también la tabla de correcciones en almuerzo y merienda",save:"Guardar",reset:"Volver a la pauta del 19/10",saved:"Guardado en este teléfono.",savedNot:"Aplicado, pero este navegador no permite guardarlo.",resetDone:"Pauta del 19/10 restaurada.",
+  footSrc:"Raciones (1 R = 10 g de hidratos): tabla de la Fundación para la Diabetes (Serafín Murillo) y tabla de HM Nens cuando difieren. Pesos en crudo o cocido según se indica; fruta sin piel ni hueso.",footSafe:"Herramienta de ayuda al cálculo, no sustituye al equipo médico. Comprueba siempre el resultado antes de inyectar.",
+  barR:"Raciones",empty:"Busca un alimento para añadirlo.",example:"Ejemplo: desayuno de 8,5 R",clear:"Vaciar",free:"libre",
+  units:"unidades",unitsShort:"U",dose:"Humalog Junior",
+  thMeal:"Comida",thPlanU:"Unidades pauta",thPlanR:"Raciones plan",thRatio:"U por R",thFrom:"Desde",thTo:"Hasta",thU:"Unidades",thThresh:"Umbral (mg/dL)",thDose:"Dosis si es mayor",
+  base:"Raciones × ratio",corr:"Corrección por glucemia",total:"Total",rounded:"Redondeado a",noG:"Introduce la glucemia para aplicar la corrección.",
+  needTag:"Falta",askH:"¿Cuál es su glucemia ahora?",askB:"La dosis depende de la corrección por glucemia. Mide o mira el sensor e introdúcela para ver las unidades.",askBtn:"Introducir glucemia",provisional:"Sin corrección (provisional)",barAsk:"¿Glucemia?",
+  snackRule:"Regla: {d} U si la glucemia es mayor de {t}; si no, 0.",snackNeedG:"Introduce la glucemia: la dosis del almuerzo y la merienda depende de ella.",snackFood:"Raciones de esta toma (informativo)",
+  hypoH:"Hipoglucemia: trátala primero",hypoB:"Dale 15 g de glucosa (3 pastillas o 150 ml de zumo) y repite la medición a los 15 minutos. Calcula la insulina cuando esté por encima de 70.",
+  muchH:"Bastante más de lo habitual",muchB:"La pauta de {m} está pensada para {r} R y aquí hay {x} R. La dosis se ha escalado con el mismo ratio; confírmalo con el equipo si es frecuente.",
+  bigH:"Dosis alta",bigB:"Más de {u} unidades en una sola comida. Revisa cantidades y pesos antes de inyectar.",
+  ratioH:"Cómo se calcula",ratioB:"Dosis = raciones × ratio de la comida (unidades de la pauta ÷ raciones del plan) + corrección según la glucemia. Escalar la dosis por raciones es una extrapolación de la pauta: confírmalo con el equipo médico.",
+  cNeedG:"Introduce la glucemia actual.",cWait:"Espera: no han pasado 3 horas desde la última insulina rápida. Corregir antes puede provocar una hipoglucemia (insulina acumulada).",cNone:"No hace falta corrección: está por debajo del objetivo.",cFormula:"({g} − {t}) ÷ {isf}",cRoundDown:"Redondeado hacia abajo a",cNeedH:"Indica cuántas horas han pasado desde la última insulina rápida.",exact:"Cálculo exacto",
+  src:{FD:"Fundación para la Diabetes",HM:"HM Nens",EST:"estimado"},perR:"g = 1 R",perRml:"ml = 1 R",label:"etiqueta"},
+ en:{title:"Carbs and insulin",subtitle:"Insulin plan of 19 Oct 2026",tabMeal:"Meal",tabCorr:"Correction",tabSet:"Settings",whichMeal:"Which meal?",glucoseBefore:"Glucose before eating",foods:"Foods",searchPh:"Search food (bread, milk, kiwi…)",customTitle:"Add from a food label",customName:"Name",customNamePh:"e.g. wheat wrap",customCarbs:"Carbs per 100 g",customGrams:"Amount (g)",customAdd:"Add",
+  corrHead:"Correction between meals",corrBody:"Only if at least 3 hours have passed since the last rapid insulin. 1 unit of Humalog Junior lowers glucose by about 100 mg/dL (sensitivity factor).",glucoseNow:"Glucose now",target:"Target (mg/dL)",hours:"Hours since last rapid insulin",
+  setIntro:"Plan values. Change them only when the medical team changes the plan. They are saved on this phone.",setMeals:"Main meals",setSnacks:"Mid-morning and afternoon snack",setCorr:"Corrections before meals",setISF:"Sensitivity factor (mg/dL per unit)",setStep:"Dose rounding (units)",setSnackCorr:"Also apply the correction table to snacks",save:"Save",reset:"Back to the 19 Oct plan",saved:"Saved on this phone.",savedNot:"Applied, but this browser won't let it be saved.",resetDone:"19 Oct plan restored.",
+  footSrc:"Raciones (1 R = 10 g carbohydrate): Fundación para la Diabetes table (Serafín Murillo), and the HM Nens table where they differ. Raw or cooked weights as stated; fruit weighed peeled and without stone.",footSafe:"A calculation aid, not a substitute for the medical team. Always check the result before injecting.",
+  barR:"Raciones",empty:"Search for a food to add it.",example:"Example: 8.5 R breakfast",clear:"Clear",free:"free",
+  units:"units",unitsShort:"U",dose:"Humalog Junior",
+  thMeal:"Meal",thPlanU:"Plan units",thPlanR:"Plan raciones",thRatio:"U per R",thFrom:"From",thTo:"To",thU:"Units",thThresh:"Threshold (mg/dL)",thDose:"Dose if above",
+  base:"Raciones × ratio",corr:"Glucose correction",total:"Total",rounded:"Rounded to",noG:"Enter glucose to apply the correction.",
+  needTag:"Needed",askH:"What is his glucose now?",askB:"The dose depends on the glucose correction. Check the sensor or a finger-prick and enter it to see the units.",askBtn:"Enter glucose",provisional:"Without correction (provisional)",barAsk:"Glucose?",
+  snackRule:"Rule: {d} U if glucose is above {t}; otherwise 0.",snackNeedG:"Enter glucose: the snack dose depends on it.",snackFood:"Raciones in this snack (for information)",
+  hypoH:"Low glucose: treat it first",hypoB:"Give 15 g of glucose (3 tablets or 150 ml juice) and recheck after 15 minutes. Work out the insulin once he is above 70.",
+  muchH:"Much more than usual",muchB:"The {m} plan is built for {r} R and this is {x} R. The dose has been scaled with the same ratio; check with the team if this is frequent.",
+  bigH:"High dose",bigB:"More than {u} units for one meal. Check quantities and weights before injecting.",
+  ratioH:"How it's calculated",ratioB:"Dose = raciones × the meal's ratio (plan units ÷ plan raciones) + correction for glucose. Scaling the dose by raciones extrapolates the plan: confirm it with the diabetes team.",
+  cNeedG:"Enter current glucose.",cWait:"Wait: 3 hours haven't passed since the last rapid insulin. Correcting earlier can cause a low (insulin stacking).",cNone:"No correction needed: he is below the target.",cFormula:"({g} − {t}) ÷ {isf}",cRoundDown:"Rounded down to",cNeedH:"Enter how many hours since the last rapid insulin.",exact:"Exact calculation",
+  src:{FD:"Fundación para la Diabetes",HM:"HM Nens",EST:"estimate"},perR:"g = 1 R",perRml:"ml = 1 R",label:"label"}
+};
+
+// ---------- STATE
+const lang = "en";
+let cfg = JSON.parse(JSON.stringify(DEFAULTS));
+try{ const s = localStorage.getItem("goran-cfg-v1"); if(s){ const p=JSON.parse(s); p.corr=p.corr.map(c=>({max:c.max===null?Infinity:c.max,u:c.u})); cfg=Object.assign(cfg,p);} }catch(e){}
+let state = { meal:"desayuno", glucose:null, example:true, items:[
+  {id:1,key:"pan_integral",qty:120},{id:2,key:"aguacate",qty:150},{id:3,key:"leche",qty:200},{id:4,key:"melocoton",qty:150}
+]};
+let nextId = 10;
+
+const $ = id => document.getElementById(id);
+const t = k => T[lang][k];
+const fmt = (n,d=2) => { const s=(Math.round(n*Math.pow(10,d))/Math.pow(10,d)).toString(); return lang==="es"? s.replace(".",",") : s; };
+const fill = (s,o) => s.replace(/\{(\w+)\}/g,(m,k)=>o[k]);
+const norm = s => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"");
+const roundTo = (x,step) => Math.round(x/step)*step;
+const esc = s => String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+function ratio(m){ const c=cfg.meals[m]; return c && c.r>0 ? c.u/c.r : 0; }
+function corrFor(g){ for(const b of cfg.corr){ if(g < b.max || (b.max===Infinity)) { return b.u; } } return 0; }
+// Bands: "<85" → first band; 85..180 inclusive of 180 → 0; ">180" → next. Use strict < for the first band, <= for the rest.
+function corrForStrict(g){
+  if(g <= cfg.corr[0].max) return cfg.corr[0].u;
+  for(let i=1;i<cfg.corr.length;i++){ if(g <= cfg.corr[i].max) return cfg.corr[i].u; }
+  return cfg.corr[cfg.corr.length-1].u;
+}
+function itemR(it){
+  if(it.custom) return (it.qty||0)*(it.carbs||0)/100/10;
+  const f=FOODS[it.key]; if(!f||!f.g) return 0; return (it.qty||0)/f.g;
+}
+function totalR(){ return state.items.reduce((a,it)=>a+itemR(it),0); }
+
+// ---------- RENDER
+function applyText(){
+  document.querySelectorAll("[data-t]").forEach(el=>{ const v=t(el.dataset.t); if(typeof v==="string") el.textContent=v; });
+  document.querySelectorAll("[data-tp]").forEach(el=>{ el.placeholder=t(el.dataset.tp); });
+  document.documentElement.lang=lang;
+}
+function renderMeals(){
+  $("meals").innerHTML = MEALS.map(m=>`<button class="chip" type="button" data-meal="${m.k}" aria-pressed="${state.meal===m.k}">${m[lang]}</button>`).join("");
+}
+function renderGlucoseState(){
+  const g=state.glucose, el=$("gstate");
+  $("gfield").classList.toggle("need", g==null); $("gneed").hidden = g!=null;
+  if(g==null){ el.hidden=true; return; }
+  el.hidden=false;
+  if(g<70){ el.className="gstate g-low"; el.textContent= lang==="es"?"Baja":"Low"; }
+  else if(g<85){ el.className="gstate g-low"; el.textContent= lang==="es"?"Justa":"Lowish"; }
+  else if(g<=180){ el.className="gstate g-ok"; el.textContent= lang==="es"?"En rango":"In range"; }
+  else { el.className="gstate g-high"; el.textContent= lang==="es"?"Alta":"High"; }
+}
+function renderItems(){
+  const box=$("items");
+  let html="";
+  if(state.example && state.items.length){ html+=`<div class="examplebar"><span>${t("example")}</span><button class="linkbtn" type="button" id="clearEx">${t("clear")}</button></div>`; }
+  if(!state.items.length){ html+=`<div class="empty">${t("empty")}</div>`; }
+  state.items.forEach(it=>{
+    const R=itemR(it);
+    let name, sub, unit="g";
+    if(it.custom){ name=esc(it.name||t("label")); sub=`${fmt(it.carbs,1)} g HC/100 g · ${t("label")}`; }
+    else { const f=FOODS[it.key]; name=f[lang]; unit=f.unit;
+      sub = f.g ? `${f.g} ${f.unit==="ml"?t("perRml"):t("perR")} · ${t("src")[f.src]}` : t("free");
+      const h = lang==="es"?f.hes:f.hen; if(h) sub += ` · ${h}`; }
+    const isFree = !it.custom && !FOODS[it.key].g;
+    html+=`<div class="item"><div class="name"><b>${name}</b><span>${sub}</span></div>
+      <label class="qty"><input id="q-${it.id}" data-id="${it.id}" type="number" inputmode="decimal" value="${it.qty}" aria-label="${name}"><span>${unit}</span></label>
+      <div class="rcell"><span class="rval ${isFree?"free":""}">${isFree?t("free"):fmt(R,1)+" R"}</span><button class="x" type="button" data-del="${it.id}" aria-label="Remove">×</button></div></div>`;
+  });
+  box.innerHTML=html;
+}
+function note(kind,h,b){ return `<div class="note ${kind}"><b>${h}</b><span>${b}</span></div>`; }
+
+function computeMeal(){
+  const meal=MEALS.find(m=>m.k===state.meal), R=totalR(), g=state.glucose;
+  const out={R, meal, notes:[], lines:[], dose:null, sub:""};
+  if(g!=null && g<70){ out.notes.push(note("bad",t("hypoH"),t("hypoB"))); }
+  if(meal.type==="main"){
+    const rt=ratio(meal.k), base=R*rt;
+    let corr=null; if(g!=null) corr=corrForStrict(g);
+    const raw=base+(corr||0), final=Math.max(0,roundTo(raw,cfg.step));
+    out.lines.push([`${t("base")}: ${fmt(R,2)} × ${fmt(rt,3)}`, `${fmt(base,2)} U`]);
+    out.lines.push([`${t("corr")}${g!=null?` (${g} mg/dL)`:""}`, corr==null?"—":(corr>0?"+":"")+fmt(corr,1)+" U"]);
+    if(g==null){
+      out.lines.push([`${t("provisional")} · ${t("rounded")} ${fmt(cfg.step,1)}`, `${fmt(final,1)} U`, true]);
+      out.dose=null; out.needG=true;
+    } else {
+      out.lines.push([`${t("total")} · ${t("rounded")} ${fmt(cfg.step,1)}`, `${fmt(final,1)} U`, true]);
+      out.dose=final;
+    }
+    const planR=cfg.meals[meal.k].r;
+    if(R>planR*1.4) out.notes.push(note("warn",t("muchH"),fill(t("muchB"),{m:meal[lang].toLowerCase(),r:fmt(planR,1),x:fmt(R,1)})));
+    if(final>8) out.notes.push(note("warn",t("bigH"),fill(t("bigB"),{u:8})));
+    out.notes.push(note("info",t("ratioH"),t("ratioB")));
+  } else {
+    out.lines.push([t("snackFood"), `${fmt(R,1)} R`]);
+    if(g==null){ out.dose=null; out.needG=true; }
+    else{
+      let d = g>cfg.snack.threshold ? cfg.snack.dose : 0;
+      if(cfg.snackCorr){ const c=corrForStrict(g); out.lines.push([`${t("corr")} (${g} mg/dL)`, (c>0?"+":"")+fmt(c,1)+" U"]); d=Math.max(0,d+c); }
+      out.dose=roundTo(d,cfg.step);
+      out.lines.push([`${t("total")}`, `${fmt(out.dose,1)} U`, true]);
+    }
+    out.notes.push(note("info",meal[lang],fill(t("snackRule"),{d:fmt(cfg.snack.dose,1),t:cfg.snack.threshold})));
+  }
+  return out;
+}
+function renderDose(){
+  const o=computeMeal();
+  const doseTxt = o.dose==null ? "—" : fmt(o.dose,1);
+  $("dose").innerHTML = `<div class="dose-top"><div><div class="label">${t("dose")} · ${o.meal[lang]}</div><div class="big">${doseTxt}<small>${t("units")}</small></div></div>
+    <div style="text-align:right"><div class="label">${t("barR")}</div><div class="big" style="font-size:34px">${fmt(o.R,1)}<small>R</small></div></div></div>
+    ${o.needG?`<div class="ask"><b>${t("askH")}</b><span>${t("askB")}</span><button class="btn" type="button" id="askG">${t("askBtn")}</button></div>`:""}
+    ${o.sub?`<div class="dose-sub">${o.sub}</div>`:""}
+    <div class="calc">${o.lines.map(l=>`<div class="${l[2]?"tot":""}"><span>${l[0]}</span><span>${l[1]}</span></div>`).join("")}</div>`;
+  $("notes").innerHTML=o.notes.join("");
+  $("barR").textContent = fmt(o.R,1)+" R";
+  $("barMeal").textContent = o.meal[lang];
+  $("barU").textContent = o.needG? t("barAsk") : (o.dose==null? "—" : fmt(o.dose,1)+" U");
+}
+function renderAll(){ applyText(); renderMeals(); renderGlucoseState(); renderItems(); renderDose(); renderCorr(); renderSettings(); }
+
+// ---------- SEARCH
+function search(q){
+  const n=norm(q.trim()); const box=$("results");
+  if(!n){ box.hidden=true; box.innerHTML=""; return; }
+  const words=n.split(/\s+/);
+  const hits=F.map(r=>FOODS[r[0]]).filter(f=>{ const hay=norm(f.es+" "+f.en+" "+f.key); return words.every(w=>hay.includes(w)); }).slice(0,30);
+  if(!hits.length){ box.innerHTML=`<div class="empty">${lang==="es"?"Sin resultados. Usa “Añadir desde la etiqueta”.":"No match. Use “Add from a food label”."}</div>`; box.hidden=false; return; }
+  let html="", lastCat="";
+  hits.forEach((f,i)=>{ if(f.cat!==lastCat){ html+=`<div class="cat">${CATS[f.cat][lang==="es"?0:1]}</div>`; lastCat=f.cat; }
+    html+=`<button type="button" data-add="${f.key}"><span>${f[lang]}</span><span class="r">${f.g?`${f.g} ${f.unit} = 1 R`:t("free")}</span></button>`; });
+  box.innerHTML=html; box.hidden=false;
+}
+function addFood(key){
+  if(state.example){ state.items=[]; state.example=false; }
+  const f=FOODS[key]; state.items.push({id:nextId++,key,qty:f.def});
+  $("q").value=""; $("results").hidden=true; renderItems(); renderDose();
+  const inp=document.getElementById("q-"+(nextId-1)); if(inp){ inp.focus(); inp.select(); }
+}
+
+// ---------- BETWEEN-MEAL CORRECTION
+function renderCorr(){
+  const g=parseFloat($("cg").value), tg=parseFloat($("ctarget").value)||100, h=$("chours").value===""?null:parseFloat($("chours").value);
+  let html="";
+  if(isNaN(g)){ html=`<div class="label">${t("dose")}</div><div class="big">—<small>${t("units")}</small></div><div class="dose-sub">${t("cNeedG")}</div>`; }
+  else if(h==null){ html=`<div class="label">${t("dose")}</div><div class="big">—<small>${t("units")}</small></div><div class="dose-sub">${t("cNeedH")}</div>`; }
+  else if(h<3){ html=note("bad",t("dose")+": 0 "+t("units"),t("cWait")); }
+  else if(g<=tg){ html=`<div class="label">${t("dose")}</div><div class="big">0<small>${t("units")}</small></div><div class="dose-sub">${t("cNone")}</div>`; }
+  else{
+    const exact=(g-tg)/cfg.isf, down=Math.floor(exact/cfg.step)*cfg.step;
+    html=`<div class="label">${t("dose")}</div><div class="big">${fmt(down,1)}<small>${t("units")}</small></div>
+    <div class="calc"><div><span>${t("exact")}: ${fill(t("cFormula"),{g, t:tg, isf:cfg.isf})}</span><span>${fmt(exact,2)} U</span></div>
+    <div class="tot"><span>${t("cRoundDown")} ${fmt(cfg.step,1)}</span><span>${fmt(down,1)} U</span></div></div>`;
+    if(g<70) html=note("bad",t("hypoH"),t("hypoB"));
+  }
+  $("cdose").innerHTML=html;
+}
+
+// ---------- SETTINGS
+function renderSettings(){
+  const mainMeals=MEALS.filter(m=>m.type==="main");
+  $("set-meals").innerHTML=`<tr><th>${t("thMeal")}</th><th>${t("thPlanU")}</th><th>${t("thPlanR")}</th><th>${t("thRatio")}</th></tr>`+
+    mainMeals.map(m=>`<tr><td>${m[lang]}</td><td><input id="s-u-${m.k}" type="number" inputmode="decimal" step="0.5" value="${cfg.meals[m.k].u}"></td><td><input id="s-r-${m.k}" type="number" inputmode="decimal" step="0.5" value="${cfg.meals[m.k].r}"></td><td>${fmt(ratio(m.k),3)}</td></tr>`).join("");
+  $("set-snacks").innerHTML=`<tr><th>${t("thThresh")}</th><th>${t("thDose")}</th></tr><tr><td><input id="s-th" type="number" inputmode="numeric" value="${cfg.snack.threshold}"></td><td><input id="s-sd" type="number" inputmode="decimal" step="0.5" value="${cfg.snack.dose}"></td></tr>`;
+  let rows=`<tr><th>${t("thFrom")}</th><th>${t("thTo")}</th><th>${t("thU")}</th></tr>`; let prev=null;
+  cfg.corr.forEach((b,i)=>{ const from = i===0? "—" : "> "+prev;
+    const to = b.max===Infinity? "—" : (i===0? `≤ <input id="s-cm-${i}" type="number" inputmode="numeric" value="${b.max}">` : `<input id="s-cm-${i}" type="number" inputmode="numeric" value="${b.max}">`);
+    rows+=`<tr><td>${from}</td><td>${to}</td><td><input id="s-cu-${i}" type="number" inputmode="decimal" step="0.5" value="${b.u}"></td></tr>`; prev=b.max; });
+  $("set-corr").innerHTML=rows;
+  $("s-isf").value=cfg.isf; $("s-step").value=cfg.step; $("s-snackcorr").checked=!!cfg.snackCorr;
+}
+function readSettings(){
+  const n=(id,def)=>{ const v=parseFloat($(id).value); return isNaN(v)?def:v; };
+  MEALS.filter(m=>m.type==="main").forEach(m=>{ cfg.meals[m.k].u=n("s-u-"+m.k,cfg.meals[m.k].u); cfg.meals[m.k].r=n("s-r-"+m.k,cfg.meals[m.k].r); });
+  cfg.snack.threshold=n("s-th",cfg.snack.threshold); cfg.snack.dose=n("s-sd",cfg.snack.dose);
+  cfg.corr.forEach((b,i)=>{ if(b.max!==Infinity) b.max=n("s-cm-"+i,b.max); b.u=n("s-cu-"+i,b.u); });
+  cfg.isf=n("s-isf",cfg.isf); cfg.step=Math.max(0.1,n("s-step",cfg.step)); cfg.snackCorr=$("s-snackcorr").checked;
+}
+function save(){
+  readSettings(); let ok=true;
+  try{ localStorage.setItem("goran-cfg-v1", JSON.stringify(Object.assign({},cfg,{corr:cfg.corr.map(c=>({max:c.max===Infinity?null:c.max,u:c.u}))}))); }catch(e){ ok=false; }
+  renderAll(); $("s-msg").textContent = ok? t("saved") : t("savedNot");
+}
+
+// ---------- TABS
+function showTab(which){
+  ["meal","corr","set"].forEach(k=>{ $("view-"+k).hidden = k!==which; $("tab-"+k).setAttribute("aria-selected", k===which); });
+}
+
+// ---------- EVENTS
+document.addEventListener("click",e=>{
+  const m=e.target.closest("[data-meal]"); if(m){ state.meal=m.dataset.meal; renderMeals(); renderDose(); return; }
+  const a=e.target.closest("[data-add]"); if(a){ addFood(a.dataset.add); return; }
+  const d=e.target.closest("[data-del]"); if(d){ state.items=state.items.filter(i=>i.id!=d.dataset.del); if(!state.items.length) state.example=false; renderItems(); renderDose(); return; }
+  if(e.target.id==="askG"){ const gi=$("glucose"); gi.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"center"}); gi.focus({preventScroll:true}); return; }
+  if(e.target.id==="clearEx"){ state.items=[]; state.example=false; renderItems(); renderDose(); return; }
+  if(!e.target.closest(".search")) $("results").hidden=true;
+});
+$("items").addEventListener("input",e=>{ const id=e.target.dataset.id; if(!id) return; const it=state.items.find(i=>i.id==id); if(!it) return;
+  it.qty=parseFloat(e.target.value)||0; state.example=false;
+  const row=e.target.closest(".item"); const R=itemR(it); const isFree=!it.custom && !FOODS[it.key].g;
+  row.querySelector(".rval").textContent = isFree? t("free") : fmt(R,1)+" R";
+  const exb=document.querySelector(".examplebar"); if(exb) exb.remove();
+  renderDose(); });
+$("glucose").addEventListener("input",e=>{ const v=parseFloat(e.target.value); state.glucose=isNaN(v)?null:v; renderGlucoseState(); renderDose(); });
+$("q").addEventListener("input",e=>search(e.target.value));
+$("q").addEventListener("focus",e=>{ if(e.target.value) search(e.target.value); });
+$("q").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const b=$("results").querySelector("[data-add]"); if(b){ e.preventDefault(); addFood(b.dataset.add);} } if(e.key==="Escape") $("results").hidden=true; });
+$("c-add").addEventListener("click",()=>{
+  const c=parseFloat($("c-carbs").value), g=parseFloat($("c-grams").value); if(isNaN(c)||isNaN(g)) return;
+  if(state.example){ state.items=[]; state.example=false; }
+  state.items.push({id:nextId++,custom:true,name:$("c-name").value.trim(),carbs:c,qty:g});
+  $("c-name").value=$("c-carbs").value=$("c-grams").value=""; $("customBox").open=false; renderItems(); renderDose();
+});
+["cg","ctarget","chours"].forEach(id=>$(id).addEventListener("input",renderCorr));
+$("s-save").addEventListener("click",save);
+$("s-reset").addEventListener("click",()=>{ cfg=JSON.parse(JSON.stringify(DEFAULTS)); cfg.corr[cfg.corr.length-1].max=Infinity; try{localStorage.removeItem("goran-cfg-v1");}catch(e){} renderAll(); $("s-msg").textContent=t("resetDone"); });
+$("tab-meal").addEventListener("click",()=>showTab("meal"));
+$("tab-corr").addEventListener("click",()=>showTab("corr"));
+$("tab-set").addEventListener("click",()=>showTab("set"));
+
+// JSON.parse(JSON.stringify(Infinity)) → null; restore it
+DEFAULTS.corr[DEFAULTS.corr.length-1].max=Infinity;
+cfg.corr = cfg.corr.map(c=>({max:(c.max===null||c.max===undefined)?Infinity:c.max,u:c.u}));
+renderAll();
+})();
+</script>
+
+<script>
+if ("serviceWorker" in navigator) { window.addEventListener("load", () => { navigator.serviceWorker.register("sw.js").catch(()=>{}); }); }
+</script>
+</body>
+</html>
