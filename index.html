@@ -527,7 +527,7 @@ function renderItems(){
     const isFree = !it.custom && !FOODS[it.key].g;
     html+=`<div class="item"><div class="name"><b>${name}</b><span>${sub}</span></div>
       <label class="qty"><input id="q-${it.id}" data-id="${it.id}" type="number" inputmode="decimal" value="${it.qty}" aria-label="${name}"><span>${unit}</span></label>
-      <div class="rcell"><span class="rstack"><span class="rval ${isFree?"free":""}">${isFree?t("free"):fmt(R,1)+" R"}</span><span class="kval">${kc(itemKcal(it))}</span></span><button class="x" type="button" data-del="${it.id}" aria-label="Remove">×</button></div></div>`;
+      <div class="rcell"><span class="rval ${isFree?"free":""}">${isFree?t("free"):fmt(R,1)+" R"}</span><button class="x" type="button" data-del="${it.id}" aria-label="Remove">×</button></div></div>`;
   });
   box.innerHTML=html;
 }
@@ -664,7 +664,6 @@ $("items").addEventListener("input",e=>{ const id=e.target.dataset.id; if(!id) r
   it.qty=parseFloat(e.target.value)||0; state.example=false;
   const row=e.target.closest(".item"); const R=itemR(it); const isFree=!it.custom && !FOODS[it.key].g;
   row.querySelector(".rval").textContent = isFree? t("free") : fmt(R,1)+" R";
-  row.querySelector(".kval").textContent = kc(itemKcal(it));
   const exb=document.querySelector(".examplebar"); if(exb) exb.remove();
   renderDose(); });
 $("glucose").addEventListener("input",e=>{ const v=parseFloat(e.target.value); state.glucose=isNaN(v)?null:v; renderGlucoseState(); renderDose(); });
