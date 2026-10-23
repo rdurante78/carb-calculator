@@ -153,7 +153,7 @@ body{margin:0}
 
 <div class="wrap">
   <header>
-    <h1><span data-t="title">Raciones e insulina</span><small data-t="subtitle">Pauta del 19 oct 2026</small></h1>
+    <h1><span data-t="title">Raciones e insulina</span><small data-t="subtitle">Pauta del 23 oct 2026</small></h1>
   </header>
 
   <nav class="tabs" role="tablist">
@@ -230,7 +230,7 @@ body{margin:0}
       <label class="mini"><span data-t="setStep">Redondeo de la dosis (unidades)</span><input id="s-step" type="number" inputmode="decimal" step="0.5"></label>
     </div>
     <label class="check"><input type="checkbox" id="s-snackcorr"><span data-t="setSnackCorr">Aplicar también la tabla de correcciones en almuerzo y merienda</span></label>
-    <div class="row"><button class="btn" id="s-save" type="button" data-t="save">Guardar</button><button class="btn secondary" id="s-reset" type="button" data-t="reset">Volver a la pauta del 19/10</button></div>
+    <div class="row"><button class="btn" id="s-save" type="button" data-t="save">Guardar</button><button class="btn secondary" id="s-reset" type="button" data-t="reset">Volver a la pauta del 23/10</button></div>
     <div id="s-msg" class="dose-sub"></div>
   </div>
 
@@ -409,9 +409,9 @@ const CATS = {pan:["Pan, galletas y cereales","Bread, biscuits & cereal"],cereal
 const KCAL = {"pan_blanco":270,"pan_integral":250,"pan_molde":265,"pan_centeno":250,"pan_hamb":280,"biscote":400,"picos":410,"tortilla_maiz":220,"maria":440,"digestive":480,"cereales":380,"allbran":330,"avena":370,"muesli":370,"arroz_crudo":360,"arroz_cocido":130,"arroz_int":120,"pasta_cruda":355,"pasta_cocida":155,"cuscus":110,"quinoa":120,"harina":350,"pan_rallado":380,"palomitas":450,"pizza":265,"lentejas_c":115,"lentejas_cr":330,"garbanzos_c":160,"judias_b":125,"guisantes":80,"maiz":80,"patata_herv":85,"patata_asada":140,"patata_frita":310,"chips":535,"pure":100,"boniato":90,"leche":50,"yog_nat":60,"yog_griego":120,"yog_azuc":95,"kefir":60,"queso_fresco":175,"cottage":100,"petit":120,"batido":75,"flan":130,"natillas":120,"helado":200,"manzana":52,"pera":55,"naranja":45,"mandarina":50,"melocoton":40,"nectarina":45,"kiwi":60,"kiwi_gold":65,"platano":90,"uva":70,"fresas":33,"frambuesas":50,"arandanos":57,"moras":45,"cerezas":63,"ciruela":46,"mango":60,"pina":50,"melon":34,"sandia":30,"higo":75,"albaricoque":48,"granada":80,"papaya":43,"chirimoya":75,"datil":280,"pasas":300,"melo_alm":70,"zanahoria":40,"zanahoria_h":35,"calabaza":26,"acelga":20,"judia_v":31,"berenjena":25,"brocoli":34,"coliflor":25,"coles_b":43,"calabacin":17,"tomate":20,"espinacas":23,"cebolla":40,"pimiento":25,"pepino":15,"remolacha":43,"alcachofa":47,"puerro":61,"gazpacho":50,"almendras":580,"avellanas":630,"cacahuetes":570,"pistachos":560,"nueces":650,"pipas":580,"zumo":45,"refresco":42,"isotonica":25,"horchata":70,"bebida_soja":40,"glucosa":380,"azucar":400,"miel":305,"mermelada":250,"nocilla":540,"choco_leche":535,"choco_negro":550,"croissant":410,"magdalena":420,"bizcocho":380,"donut":430,"barrita":400,"golosinas":340,"ketchup":110,"tomate_frito":80,"tortilla_pat":160,"croquetas":230,"sushi":150,"lasana":150,"aguacate":160,"carne":180,"pescado":120,"huevo":145,"jamon":200,"embutido":300,"queso_curado":380,"aceite":900,"mantequilla":740,"nata":300,"lechuga":18,"aceitunas":145,"cola_zero":0};
 const FOODS = {}; F.forEach(r=>{FOODS[r[0]]={key:r[0],es:r[1],en:r[2],g:r[3],unit:r[4],cat:r[5],src:r[6],hes:r[7],hen:r[8],def:r[9],kcal:KCAL[r[0]]}});
 
-// ---------- DEFAULT PLAN (19 Oct 2026) + ratios from the family's sheet
+// ---------- DEFAULT PLAN (23 Oct 2026) + ratios from the family's sheet
 const DEFAULTS = {
-  meals:{ desayuno:{u:3,r:4.5}, comida:{u:4,r:9}, cena:{u:2.5,r:6.5} },
+  meals:{ desayuno:{u:3,r:4.5}, comida:{u:3,r:9}, cena:{u:1.5,r:6.5} },
   snack:{ threshold:150, dose:2 },
   corr:[ {max:85,u:-1}, {max:180,u:0}, {max:230,u:0.5}, {max:280,u:1}, {max:330,u:1.5}, {max:380,u:2}, {max:430,u:2.5}, {max:Infinity,u:3} ],
   isf:100, step:0.5, snackCorr:false
@@ -425,9 +425,9 @@ const MEALS = [
 ];
 
 const T = {
- es:{title:"Raciones e insulina",subtitle:"Pauta del 19 oct 2026",tabMeal:"Comida",tabCorr:"Corrección",tabSet:"Ajustes",whichMeal:"¿Qué comida?",glucoseBefore:"Glucemia antes de comer",foods:"Alimentos",searchPh:"Buscar alimento (pan, leche, kiwi…)",customTitle:"Añadir desde la etiqueta",customName:"Nombre",customNamePh:"p. ej. wrap de trigo",customCarbs:"Hidratos por 100 g",customGrams:"Cantidad (g)",customAdd:"Añadir",
+ es:{title:"Raciones e insulina",subtitle:"Pauta del 23 oct 2026",tabMeal:"Comida",tabCorr:"Corrección",tabSet:"Ajustes",whichMeal:"¿Qué comida?",glucoseBefore:"Glucemia antes de comer",foods:"Alimentos",searchPh:"Buscar alimento (pan, leche, kiwi…)",customTitle:"Añadir desde la etiqueta",customName:"Nombre",customNamePh:"p. ej. wrap de trigo",customCarbs:"Hidratos por 100 g",customGrams:"Cantidad (g)",customAdd:"Añadir",
   corrHead:"Corrección fuera de las comidas",corrBody:"Solo si han pasado al menos 3 horas desde la última insulina rápida. 1 unidad de Humalog Junior baja unos 100 mg/dL (factor de sensibilidad).",glucoseNow:"Glucemia ahora",target:"Objetivo (mg/dL)",hours:"Horas desde la última rápida",
-  setIntro:"Valores de la pauta. Cámbialos solo cuando el equipo médico cambie la pauta. Se guardan en este teléfono.",setMeals:"Comidas principales",setSnacks:"Almuerzo y merienda",setCorr:"Correcciones antes de comer",setISF:"Factor de sensibilidad (mg/dL por unidad)",setStep:"Redondeo de la dosis (unidades)",setSnackCorr:"Aplicar también la tabla de correcciones en almuerzo y merienda",save:"Guardar",reset:"Volver a la pauta del 19/10",saved:"Guardado en este teléfono.",savedNot:"Aplicado, pero este navegador no permite guardarlo.",resetDone:"Pauta del 19/10 restaurada.",
+  setIntro:"Valores de la pauta. Cámbialos solo cuando el equipo médico cambie la pauta. Se guardan en este teléfono.",setMeals:"Comidas principales",setSnacks:"Almuerzo y merienda",setCorr:"Correcciones antes de comer",setISF:"Factor de sensibilidad (mg/dL por unidad)",setStep:"Redondeo de la dosis (unidades)",setSnackCorr:"Aplicar también la tabla de correcciones en almuerzo y merienda",save:"Guardar",reset:"Volver a la pauta del 23/10",saved:"Guardado en este teléfono.",savedNot:"Aplicado, pero este navegador no permite guardarlo.",resetDone:"Pauta del 23/10 restaurada.",
   footSrc:"Raciones (1 R = 10 g de hidratos): tabla de la Fundación para la Diabetes (Serafín Murillo) y tabla de HM Nens cuando difieren. Pesos en crudo o cocido según se indica; fruta sin piel ni hueso.",footKcal:"Calorías aproximadas, según valores típicos de las tablas BEDCA y USDA; platos y marcas varían.",footSafe:"Herramienta de ayuda al cálculo, no sustituye al equipo médico. Comprueba siempre el resultado antes de inyectar.",
   barR:"Raciones",empty:"Busca un alimento para añadirlo.",example:"Ejemplo: desayuno de 8,5 R",clear:"Vaciar",free:"libre",
   units:"unidades",unitsShort:"U",dose:"Humalog Junior",
@@ -441,9 +441,9 @@ const T = {
   ratioH:"Cómo se calcula",ratioB:"Dosis = raciones × ratio de la comida (unidades de la pauta ÷ raciones del plan) + corrección según la glucemia. Escalar la dosis por raciones es una extrapolación de la pauta: confírmalo con el equipo médico.",
   cNeedG:"Introduce la glucemia actual.",cWait:"Espera: no han pasado 3 horas desde la última insulina rápida. Corregir antes puede provocar una hipoglucemia (insulina acumulada).",cNone:"No hace falta corrección: está por debajo del objetivo.",cFormula:"({g} − {t}) ÷ {isf}",cRoundDown:"Redondeado hacia abajo a",cNeedH:"Indica cuántas horas han pasado desde la última insulina rápida.",exact:"Cálculo exacto",
   src:{FD:"Fundación para la Diabetes",HM:"HM Nens",EST:"estimado"},perR:"g = 1 R",perRml:"ml = 1 R",label:"etiqueta"},
- en:{title:"Carbs and insulin",subtitle:"Insulin plan of 19 Oct 2026",tabMeal:"Meal",tabCorr:"Correction",tabSet:"Settings",whichMeal:"Which meal?",glucoseBefore:"Glucose before eating",foods:"Foods",searchPh:"Search food (bread, milk, kiwi…)",customTitle:"Add from a food label",customName:"Name",customNamePh:"e.g. wheat wrap",customCarbs:"Carbs per 100 g",customGrams:"Amount (g)",customAdd:"Add",
+ en:{title:"Carbs and insulin",subtitle:"Insulin plan of 23 Oct 2026",tabMeal:"Meal",tabCorr:"Correction",tabSet:"Settings",whichMeal:"Which meal?",glucoseBefore:"Glucose before eating",foods:"Foods",searchPh:"Search food (bread, milk, kiwi…)",customTitle:"Add from a food label",customName:"Name",customNamePh:"e.g. wheat wrap",customCarbs:"Carbs per 100 g",customGrams:"Amount (g)",customAdd:"Add",
   corrHead:"Correction between meals",corrBody:"Only if at least 3 hours have passed since the last rapid insulin. 1 unit of Humalog Junior lowers glucose by about 100 mg/dL (sensitivity factor).",glucoseNow:"Glucose now",target:"Target (mg/dL)",hours:"Hours since last rapid insulin",
-  setIntro:"Plan values. Change them only when the medical team changes the plan. They are saved on this phone.",setMeals:"Main meals",setSnacks:"Mid-morning and afternoon snack",setCorr:"Corrections before meals",setISF:"Sensitivity factor (mg/dL per unit)",setStep:"Dose rounding (units)",setSnackCorr:"Also apply the correction table to snacks",save:"Save",reset:"Back to the 19 Oct plan",saved:"Saved on this phone.",savedNot:"Applied, but this browser won't let it be saved.",resetDone:"19 Oct plan restored.",
+  setIntro:"Plan values. Change them only when the medical team changes the plan. They are saved on this phone.",setMeals:"Main meals",setSnacks:"Mid-morning and afternoon snack",setCorr:"Corrections before meals",setISF:"Sensitivity factor (mg/dL per unit)",setStep:"Dose rounding (units)",setSnackCorr:"Also apply the correction table to snacks",save:"Save",reset:"Back to the 23 Oct plan",saved:"Saved on this phone.",savedNot:"Applied, but this browser won't let it be saved.",resetDone:"23 Oct plan restored.",
   footSrc:"Raciones (1 R = 10 g carbohydrate): Fundación para la Diabetes table (Serafín Murillo), and the HM Nens table where they differ. Raw or cooked weights as stated; fruit weighed peeled and without stone.",footKcal:"Calories are approximate, from typical values in the BEDCA and USDA food composition tables; dishes and brands vary.",footSafe:"A calculation aid, not a substitute for the medical team. Always check the result before injecting.",
   barR:"Raciones",empty:"Search for a food to add it.",example:"Example: 8.5 R breakfast",clear:"Clear",free:"free",
   units:"units",unitsShort:"U",dose:"Humalog Junior",
@@ -462,7 +462,7 @@ const T = {
 // ---------- STATE
 const lang = "en";
 let cfg = JSON.parse(JSON.stringify(DEFAULTS));
-try{ const s = localStorage.getItem("goran-cfg-v1"); if(s){ const p=JSON.parse(s); p.corr=p.corr.map(c=>({max:c.max===null?Infinity:c.max,u:c.u})); cfg=Object.assign(cfg,p);} }catch(e){}
+try{ const s = localStorage.getItem("goran-cfg-v2"); if(s){ const p=JSON.parse(s); p.corr=p.corr.map(c=>({max:c.max===null?Infinity:c.max,u:c.u})); cfg=Object.assign(cfg,p);} }catch(e){}
 let state = { meal:"desayuno", glucose:null, example:true, items:[
   {id:1,key:"pan_integral",qty:120},{id:2,key:"aguacate",qty:150},{id:3,key:"leche",qty:200},{id:4,key:"melocoton",qty:150}
 ]};
@@ -642,7 +642,7 @@ function readSettings(){
 }
 function save(){
   readSettings(); let ok=true;
-  try{ localStorage.setItem("goran-cfg-v1", JSON.stringify(Object.assign({},cfg,{corr:cfg.corr.map(c=>({max:c.max===Infinity?null:c.max,u:c.u}))}))); }catch(e){ ok=false; }
+  try{ localStorage.setItem("goran-cfg-v2", JSON.stringify(Object.assign({},cfg,{corr:cfg.corr.map(c=>({max:c.max===Infinity?null:c.max,u:c.u}))}))); }catch(e){ ok=false; }
   renderAll(); $("s-msg").textContent = ok? t("saved") : t("savedNot");
 }
 
@@ -679,7 +679,7 @@ $("c-add").addEventListener("click",()=>{
 });
 ["cg","ctarget","chours"].forEach(id=>$(id).addEventListener("input",renderCorr));
 $("s-save").addEventListener("click",save);
-$("s-reset").addEventListener("click",()=>{ cfg=JSON.parse(JSON.stringify(DEFAULTS)); cfg.corr[cfg.corr.length-1].max=Infinity; try{localStorage.removeItem("goran-cfg-v1");}catch(e){} renderAll(); $("s-msg").textContent=t("resetDone"); });
+$("s-reset").addEventListener("click",()=>{ cfg=JSON.parse(JSON.stringify(DEFAULTS)); cfg.corr[cfg.corr.length-1].max=Infinity; try{localStorage.removeItem("goran-cfg-v2");}catch(e){} renderAll(); $("s-msg").textContent=t("resetDone"); });
 $("tab-meal").addEventListener("click",()=>showTab("meal"));
 $("tab-corr").addEventListener("click",()=>showTab("corr"));
 $("tab-set").addEventListener("click",()=>showTab("set"));
