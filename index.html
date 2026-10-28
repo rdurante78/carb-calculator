@@ -102,6 +102,23 @@ section.block{display:flex;flex-direction:column;gap:10px}
 .examplebar{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--warn-soft);color:var(--warn);font-size:13px;font-weight:700;padding:8px 12px}
 .linkbtn{border:0;background:transparent;color:var(--accent);font:700 14px var(--font-body);cursor:pointer;padding:4px 0;text-decoration:underline;text-underline-offset:3px}
 
+.describe{display:flex;flex-direction:column;gap:8px;background:var(--surface);border:1.5px solid var(--line);border-radius:14px;padding:12px}
+.dlabel{font-weight:700;font-size:14.5px}
+.describe textarea{width:100%;min-width:0;resize:vertical;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);border-radius:10px;font:400 16px/1.4 var(--font-body);padding:9px 11px}
+.describe textarea:focus{outline:none;border-color:var(--accent)}
+.btn.ai{background:var(--accent);color:var(--accent-ink)}
+.sugg{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}
+.srow{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center}
+.srow .sname{min-width:0}
+.srow .sname b{display:block;font-size:14.5px}
+.srow .sname span{font-size:12.5px;color:var(--muted)}
+.srow select{max-width:100%;min-width:0;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;font:400 13px var(--font-body);padding:4px 6px;margin-top:4px}
+.srow .qty input{width:52px}
+.srow input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent)}
+.smiss{font-size:13.5px;color:var(--warn);background:var(--warn-soft);border-radius:9px;padding:7px 10px}
+.sfoot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.snote{font-size:12.5px;color:var(--muted)}
+.estbadge{display:inline-block;font-size:11px;font-weight:700;color:var(--warn);background:var(--warn-soft);border-radius:999px;padding:1px 7px;margin-left:4px}
 details.custom{background:var(--surface);border:1.5px dashed var(--line);border-radius:12px;padding:10px 12px}
 details.custom summary{cursor:pointer;font-weight:700;font-size:14px;color:var(--accent)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
@@ -185,6 +202,15 @@ body{margin:0}
 
     <section class="block">
       <div class="label" data-t="foods">Alimentos</div>
+      <div class="describe">
+        <label for="desc" class="dlabel" data-t="descLabel">Describe the meal</label>
+        <textarea id="desc" rows="2" data-tp="descPh" placeholder="e.g. 12 salmon maki, a glass of milk and a small banana"></textarea>
+        <div class="row">
+          <button class="btn" id="descGo" type="button" data-t="descGo">Suggest foods</button>
+          <button class="btn ai" id="descAI" type="button" hidden data-t="descAI">Ask Claude</button>
+        </div>
+        <div id="sugg" class="sugg" hidden aria-live="polite"></div>
+      </div>
       <div class="search">
         <div class="field"><input id="q" type="search" autocomplete="off" data-tp="searchPh" placeholder="Buscar alimento (pan, leche, kiwi…)"></div>
         <div id="results" class="results" hidden></div>
@@ -573,7 +599,7 @@ const F = [
 const CATS = {pan:["Pan, galletas y cereales","Bread, biscuits & cereal"],cereal:["Arroz, pasta y harinas","Rice, pasta & flour"],legumbre:["Legumbres","Pulses"],patata:["Patata","Potato"],lacteo:["Lácteos","Dairy"],fruta:["Fruta","Fruit"],verdura:["Verdura","Vegetables"],seco:["Frutos secos","Nuts"],bebida:["Bebidas","Drinks"],dulce:["Dulces y bollería","Sweets & pastries"],salsa:["Salsas y untables","Sauces & spreads"],plato:["Platos, sushi y comida para llevar","Dishes, sushi & takeaway"],libre:["Sin hidratos (libre)","No carbs (free)"]};
 // Approximate energy: kcal per 100 g or 100 ml, or per piece for unit "pc" (typical values from BEDCA / USDA food composition tables).
 const KCAL = {"pan_blanco":270,"pan_integral":250,"pan_molde":265,"pan_centeno":250,"pan_hamb":280,"biscote":400,"picos":410,"tortilla_maiz":220,"maria":440,"digestive":480,"cereales":380,"allbran":330,"avena":370,"muesli":370,"arroz_crudo":360,"arroz_cocido":130,"arroz_int":120,"pasta_cruda":355,"pasta_cocida":155,"cuscus":110,"quinoa":120,"harina":350,"pan_rallado":380,"palomitas":450,"pizza":265,"lentejas_c":115,"lentejas_cr":330,"garbanzos_c":160,"judias_b":125,"guisantes":80,"maiz":80,"patata_herv":85,"patata_asada":140,"patata_frita":310,"chips":535,"pure":100,"boniato":90,"leche":50,"yog_nat":60,"yog_griego":120,"yog_azuc":95,"kefir":60,"queso_fresco":175,"cottage":100,"petit":120,"batido":75,"flan":130,"natillas":120,"helado":200,"manzana":52,"pera":55,"naranja":45,"mandarina":50,"melocoton":40,"nectarina":45,"kiwi":60,"kiwi_gold":65,"platano":90,"uva":70,"fresas":33,"frambuesas":50,"arandanos":57,"moras":45,"cerezas":63,"ciruela":46,"mango":60,"pina":50,"melon":34,"sandia":30,"higo":75,"albaricoque":48,"granada":80,"papaya":43,"chirimoya":75,"datil":280,"pasas":300,"melo_alm":70,"zanahoria":40,"zanahoria_h":35,"calabaza":26,"acelga":20,"judia_v":31,"berenjena":25,"brocoli":34,"coliflor":25,"coles_b":43,"calabacin":17,"tomate":20,"espinacas":23,"cebolla":40,"pimiento":25,"pepino":15,"remolacha":43,"alcachofa":47,"puerro":61,"gazpacho":50,"almendras":580,"avellanas":630,"cacahuetes":570,"pistachos":560,"nueces":650,"pipas":580,"zumo":45,"refresco":42,"isotonica":25,"horchata":70,"bebida_soja":40,"glucosa":380,"azucar":400,"miel":305,"mermelada":250,"nocilla":540,"choco_leche":535,"choco_negro":550,"croissant":410,"magdalena":420,"bizcocho":380,"donut":430,"barrita":400,"golosinas":340,"ketchup":110,"tomate_frito":80,"tortilla_pat":160,"croquetas":230,"sushi":150,"lasana":150,"aguacate":160,"carne":180,"pescado":120,"huevo":145,"jamon":200,"embutido":300,"queso_curado":380,"aceite":900,"mantequilla":740,"nata":300,"lechuga":18,"aceitunas":145,"cola_zero":0,"pan_payes":260,"pan_leche":330,"bagel":260,"pita":275,"wrap_trigo":300,"rebanada_molde":65,"biscote_pc":40,"tortita_arroz":30,"maria_pc":30,"digestive_pc":52,"principe_pc":72,"oreo_pc":53,"galleta_sin":430,"arroz_hinchado":380,"cereales_choco":390,"porridge":70,"tortita_amer":90,"gofre":140,"arroz_int_crudo":350,"arroz_salvaje":100,"pasta_int":130,"pasta_huevo":370,"gnocchi":150,"noodles":140,"fideos_arroz":110,"fideos_soja":100,"cuscus_crudo":360,"quinoa_cruda":370,"bulgur":85,"trigo_sarraceno":90,"cebada":120,"mijo":120,"semola_c":70,"tapioca":130,"maiz_sin":70,"polenta":70,"garbanzos_cr":360,"judias_cr":330,"judias_rojas":120,"soja_c":170,"edamame":120,"hummus":170,"falafel":330,"pure_copos":350,"patata_salteada":150,"bravas":220,"yuca":160,"cuajada":90,"yog_desn_sab":75,"yog_liquido":80,"actimel":70,"yog_nat_pc":75,"yog_azuc_pc":120,"petit_pc":65,"leche_cond":320,"leche_polvo":360,"helado_sin":150,"polo":90,"helado_choco":220,"cucurucho":45,"bebida_avena":45,"bebida_almendra":15,"caqui":70,"pomelo":40,"mandarina_pc":35,"litchi":66,"nispero":45,"grosella":45,"coco":350,"manzana_asada":90,"pina_conserva":60,"macedonia":65,"orejones":240,"ciruela_pasa":240,"higo_seco":250,"datil_pc":35,"castanas":200,"aros_cebolla":330,"setas":25,"repollo":25,"nabo":28,"rabano":16,"apio":16,"endibia":17,"brotes_soja":30,"palmitos":28,"zanahoria_lata":25,"crema_verdura":50,"salmorejo":120,"anacardos":570,"sesamo":570,"quicos":450,"lata_refresco":140,"brick_zumo":90,"brick_batido":150,"energetica":45,"tonica":38,"mosto":60,"limonada":40,"cacao_polvo":380,"cacao_puro":350,"glucosa_pc":21,"churros":400,"palmera":500,"ensaimada":410,"bolleria":420,"croissant_pc":245,"magdalena_pc":210,"donut_pc":250,"brownie":450,"tarta_choco":400,"tarta_manzana":260,"pastel_crema":300,"crema_pastelera":150,"gelatina":70,"natillas_pc":150,"turron":480,"mazapan":450,"caramelo":390,"regaliz":350,"merengue":390,"membrillo":270,"barrita_pc":100,"chocolatina":510,"crema_cacahuete":600,"bechamel":130,"barbacoa":170,"boloñesa":100,"teriyaki":120,"mayonesa":600,"pesto":450,"vinagre_modena":250,"hosomaki":35,"uramaki":50,"nigiri":55,"gyoza":45,"arroz_frito":170,"paella":160,"fideua":170,"macarrones_tomate":150,"espaguetis_bol":150,"lentejas_guiso":110,"canelones":150,"pizza_porcion":160,"mini_burger_pan":70,"burger_pan":220,"nuggets":50,"varitas":60,"croqueta_pc":70,"empanadilla_pc":120,"calamares":200,"rebozado":230,"nachos":500,"kebab_carne":220,"surimi":100,"smoothie_fruta":55,"smoothie_yogur":70,"batido_helado":110,"granizado":65,"frappe":70};
-const ALIAS = {"patata_frita": "fries french fries chips patatas fritas", "chips": "crisps patatas de bolsa", "patata_asada": "roasted potatoes oven potato patatas al horno asadas", "patata_salteada": "pan fried potatoes saltead", "patata_herv": "boiled potato cocida", "pure": "mashed potatoes", "hosomaki": "maki sushi roll", "uramaki": "maki sushi california roll", "nigiri": "sushi", "sushi": "maki nigiri", "smoothie_fruta": "smoothie batido zumo licuado", "smoothie_yogur": "smoothie batido", "batido_helado": "milkshake batido shake", "batido": "chocolate milk colacao cacao", "zumo": "juice orange naranja", "refresco": "soda coke cola fanta", "lata_refresco": "soda coke cola fanta can", "platano": "banana", "fresas": "strawberries fresones", "arandanos": "blueberries", "frambuesas": "raspberries", "pan_blanco": "bread baguette barra", "pan_integral": "bread wholemeal brown", "pan_molde": "bread toast sandwich bimbo", "rebanada_molde": "bread toast sandwich slice", "maria": "biscuits cookies galletas", "maria_pc": "biscuits cookies galletas", "helado": "ice cream gelato", "helado_choco": "ice cream gelato", "pasta_cocida": "spaghetti macaroni macarrones espaguetis penne", "pasta_cruda": "spaghetti macaroni macarrones espaguetis penne", "arroz_cocido": "rice", "arroz_frito": "fried rice", "mini_burger_pan": "slider burger hamburguesa bun", "burger_pan": "burger hamburguesa bun", "nuggets": "chicken nuggets pollo", "croissant": "croissant", "croissant_pc": "croissant", "glucosa": "dextro glucose tablets", "glucosa_pc": "dextro glucose tablet", "yog_nat": "yoghurt yogurt", "yog_azuc": "yoghurt yogurt", "leche": "milk"};
+const ALIAS = {"patata_frita": "fries french fries chips patatas fritas", "chips": "crisps patatas de bolsa", "patata_asada": "roasted potatoes oven potato patatas al horno asadas", "patata_salteada": "pan fried potatoes saltead", "patata_herv": "boiled potato cocida", "pure": "mashed potatoes", "hosomaki": "maki sushi roll", "uramaki": "maki sushi california roll", "nigiri": "sushi", "sushi": "maki nigiri", "smoothie_fruta": "smoothie batido zumo licuado", "smoothie_yogur": "smoothie batido", "batido_helado": "milkshake batido shake", "batido": "chocolate milk colacao cacao", "zumo": "juice orange naranja", "refresco": "soda coke cola fanta", "lata_refresco": "soda coke cola fanta can", "platano": "banana", "fresas": "strawberries fresones", "arandanos": "blueberries", "frambuesas": "raspberries", "pan_blanco": "bread baguette barra", "pan_integral": "bread wholemeal brown", "pan_molde": "bread toast sandwich bimbo", "rebanada_molde": "bread toast sandwich slice", "maria": "biscuits cookies galletas", "maria_pc": "biscuits cookies galletas", "helado": "ice cream gelato", "helado_choco": "ice cream gelato", "pasta_cocida": "spaghetti macaroni macarrones espaguetis penne", "pasta_cruda": "spaghetti macaroni macarrones espaguetis penne", "arroz_cocido": "rice", "arroz_frito": "fried rice", "mini_burger_pan": "slider burger hamburguesa bun", "burger_pan": "burger hamburguesa bun", "nuggets": "chicken nuggets pollo", "croissant": "croissant", "croissant_pc": "croissant", "glucosa": "dextro glucose tablets", "glucosa_pc": "dextro glucose tablet", "yog_nat": "yoghurt yogurt", "yog_azuc": "yoghurt yogurt", "leche": "milk", "carne": "chicken pollo beef ternera pork cerdo steak filete lamb cordero patty hamburguesa meatballs albondigas turkey pavo", "pescado": "salmon tuna atun merluza hake cod bacalao prawns gambas sardines", "huevo": "eggs omelette tortilla francesa fried egg huevos", "queso_curado": "cheese queso parmesan manchego cheddar", "lechuga": "salad ensalada lettuce vegetables verduras", "macarrones_tomate": "macarrones macaroni pasta tomato tomate", "cucurucho": "cone cono barquillo", "pizza": "pizza"};
 const FOODS = {}; F.forEach(r=>{FOODS[r[0]]={key:r[0],es:r[1],en:r[2],g:r[3],unit:r[4],cat:r[5],src:r[6],hes:r[7],hen:r[8],def:r[9],kcal:KCAL[r[0]]}});
 
 // ---------- DEFAULT PLAN (23 Oct 2026) + ratios from the family's sheet
@@ -601,7 +627,7 @@ const T = {
   units:"unidades",unitsShort:"U",dose:"Humalog Junior",
   thMeal:"Comida",thPlanU:"Unidades pauta",thPlanR:"Raciones plan",thRatio:"U por R",thFrom:"Desde",thTo:"Hasta",thU:"Unidades",thThresh:"Umbral (mg/dL)",thDose:"Dosis si es mayor",
   base:"Raciones × ratio",corr:"Corrección por glucemia",total:"Total",rounded:"Redondeado a",noG:"Introduce la glucemia para aplicar la corrección.",
-  needTag:"Falta",pcs:"uds",pc1:"unidad",night:"noche",atNight:"por la noche",barK:"Calorías",customKcal:"kcal por 100 g (opcional)",askH:"¿Cuál es su glucemia ahora?",askB:"La dosis depende de la corrección por glucemia. Mide o mira el sensor e introdúcela para ver las unidades.",askBtn:"Introducir glucemia",provisional:"Sin corrección (provisional)",barAsk:"¿Glucemia?",
+  needTag:"Falta",descLabel:"Describe la comida",descPh:"p. ej. 12 makis de salmón, un vaso de leche y un plátano pequeño",descGo:"Sugerir alimentos",descAI:"Preguntar a Claude",addSel:"Añadir seleccionados",sNone:"No he reconocido nada. Usa palabras sencillas, un alimento por coma, o pregunta a Claude.",sMiss:"No está en la lista:",sMissTip:"pregunta a Claude o añádelo desde la etiqueta.",thinking:"Pensando… (puede tardar un minuto)",aiNote:"Estimación de Claude: revisa las cantidades antes de inyectar.",aiFail:"Claude no ha podido responder. Vuelve a intentarlo o usa la lista.",aiOff:"Claude no está disponible aquí; usa las sugerencias o la lista.",aiStop:"Parar",byAI:"Claude",pcs:"uds",pc1:"unidad",night:"noche",atNight:"por la noche",barK:"Calorías",customKcal:"kcal por 100 g (opcional)",askH:"¿Cuál es su glucemia ahora?",askB:"La dosis depende de la corrección por glucemia. Mide o mira el sensor e introdúcela para ver las unidades.",askBtn:"Introducir glucemia",provisional:"Sin corrección (provisional)",barAsk:"¿Glucemia?",
   snackRule:"Regla: {d} U si la glucemia es mayor de {t}; si no, 0.",snackNeedG:"Introduce la glucemia: la dosis del almuerzo y la merienda depende de ella.",snackFood:"Raciones de esta toma (informativo)",
   hypoH:"Hipoglucemia: trátala primero",hypoB:"Dale 15 g de glucosa (3 pastillas o 150 ml de zumo) y repite la medición a los 15 minutos. Calcula la insulina cuando esté por encima de 70.",
   muchH:"Bastante más de lo habitual",muchB:"La pauta de {m} está pensada para {r} R y aquí hay {x} R. La dosis se ha escalado con el mismo ratio; confírmalo con el equipo si es frecuente.",
@@ -617,7 +643,7 @@ const T = {
   units:"units",unitsShort:"U",dose:"Humalog Junior",
   thMeal:"Meal",thPlanU:"Plan units",thPlanR:"Plan raciones",thRatio:"U per R",thFrom:"From",thTo:"To",thU:"Units",thThresh:"Threshold (mg/dL)",thDose:"Dose if above",
   base:"Raciones × ratio",corr:"Glucose correction",total:"Total",rounded:"Rounded to",noG:"Enter glucose to apply the correction.",
-  needTag:"Needed",pcs:"pcs",pc1:"piece",night:"night",atNight:"at night",barK:"Calories",customKcal:"kcal per 100 g (optional)",askH:"What is his glucose now?",askB:"The dose depends on the glucose correction. Check the sensor or a finger-prick and enter it to see the units.",askBtn:"Enter glucose",provisional:"Without correction (provisional)",barAsk:"Glucose?",
+  needTag:"Needed",descLabel:"Describe the meal",descPh:"e.g. 12 salmon maki, a glass of milk and a small banana",descGo:"Suggest foods",descAI:"Ask Claude",addSel:"Add selected",sNone:"Nothing recognised. Try simpler words, one food per comma, or Ask Claude.",sMiss:"Not in the list:",sMissTip:"use Ask Claude or Add from a food label.",thinking:"Thinking… (can take up to a minute)",aiNote:"Claude estimate: check the amounts before dosing.",aiFail:"Claude couldn't answer this time. Try again or use the list.",aiOff:"Claude isn't available here; use the suggestions or the list.",aiStop:"Stop",byAI:"Claude",pcs:"pcs",pc1:"piece",night:"night",atNight:"at night",barK:"Calories",customKcal:"kcal per 100 g (optional)",askH:"What is his glucose now?",askB:"The dose depends on the glucose correction. Check the sensor or a finger-prick and enter it to see the units.",askBtn:"Enter glucose",provisional:"Without correction (provisional)",barAsk:"Glucose?",
   snackRule:"Rule: {d} U if glucose is above {t}; otherwise 0.",snackNeedG:"Enter glucose: the snack dose depends on it.",snackFood:"Raciones in this snack (for information)",
   hypoH:"Low glucose: treat it first",hypoB:"Give 15 g of glucose (3 tablets or 150 ml juice) and recheck after 15 minutes. Work out the insulin once he is above 70.",
   muchH:"Much more than usual",muchB:"The {m} plan is built for {r} R and this is {x} R. The dose has been scaled with the same ratio; check with the team if this is frequent.",
@@ -772,6 +798,156 @@ function search(q){
     html+=`<button type="button" data-add="${f.key}"><span>${f[lang]}</span><span class="r">${perRText(f)}</span></button>`; });
   box.innerHTML=html; box.hidden=false;
 }
+// ---------- DESCRIBE THE MEAL (offline parser)
+const NUMW={a:1,an:1,one:1,two:2,three:3,four:4,five:5,six:6,seven:7,eight:8,nine:9,ten:10,eleven:11,twelve:12,fifteen:15,twenty:20,
+  un:1,una:1,uno:1,dos:2,tres:3,cuatro:4,cinco:5,seis:6,siete:7,ocho:8,nueve:9,diez:10,once:11,doce:12,quince:15,veinte:20,
+  half:0.5,medio:0.5,media:0.5,"½":0.5,quarter:0.25,cuarto:0.25,couple:2,par:2};
+// household units → [kind, amount]; kind: "pc" pieces, "ml", "g", "def" (one usual portion of that food)
+const UNITW={glass:["ml",200],glasses:["ml",200],vaso:["ml",200],vasos:["ml",200],cup:["ml",250],cups:["ml",250],taza:["ml",250],tazas:["ml",250],
+  can:["ml",330],cans:["ml",330],lata:["ml",330],latas:["ml",330],bottle:["ml",500],botella:["ml",500],carton:["ml",200],brick:["ml",200],
+  scoop:["g",70],scoops:["g",70],bola:["g",70],bolas:["g",70],spoon:["g",15],spoons:["g",15],tablespoon:["g",15],tbsp:["g",15],cucharada:["g",15],cucharadas:["g",15],
+  handful:["g",20],punado:["g",20],bowl:["def",1],bowls:["def",1],plate:["def",1],plates:["def",1],plato:["def",1],platos:["def",1],portion:["def",1],racion:["def",1],serving:["def",1],
+  piece:["pc",1],pieces:["pc",1],pieza:["pc",1],piezas:["pc",1],pc:["pc",1],pcs:["pc",1],unidad:["pc",1],unidades:["pc",1],uds:["pc",1],
+  slice:["pc",1],slices:["pc",1],rebanada:["pc",1],rebanadas:["pc",1],porcion:["pc",1],porciones:["pc",1],trozo:["pc",1],trozos:["pc",1],pot:["pc",1],pots:["pc",1],tarrina:["pc",1]};
+const STOPW=new Set("of the some with and y de del la el los las con a an un una unos unas for para my his her su sus little bit small big large pequeno pequena grande medium mediano mediana about around approx aprox roughly unos ate eating eat comio come".split(" "));
+const SIZEW={small:0.7,pequeno:0.7,pequena:0.7,little:0.7,big:1.3,large:1.3,grande:1.3,grandes:1.3};
+function parseChunk(raw){
+  let txt=norm(raw).replace(/½/g," half ").replace(/(\d),(\d)/g,"$1.$2");
+  let count=null, grams=null, ml=null, unit=null, size=1;
+  const mg=txt.match(/(\d+(?:\.\d+)?)\s*(kg|g|gr|grs|gram|grams|gramos|ml|cl|l|litre|litro|litros)\b/);
+  if(mg){ const v=parseFloat(mg[1]), u=mg[2];
+    if(u==="kg") grams=v*1000; else if(["ml"].includes(u)) ml=v; else if(u==="cl") ml=v*10; else if(["l","litre","litro","litros"].includes(u)) ml=v*1000; else grams=v;
+    txt=txt.replace(mg[0]," "); }
+  const words=txt.split(/[^a-z0-9.]+/).filter(Boolean); const food=[];
+  for(const w of words){
+    if(/^\d+(\.\d+)?$/.test(w)){ count=(count||1)*parseFloat(w); continue; }
+    if(w in NUMW && count===null && !food.length){ count=NUMW[w]; continue; }
+    if(w==="half"||w==="medio"||w==="media"){ count=(count||1)*0.5; continue; }
+    if(w in UNITW){ unit=UNITW[w]; continue; }
+    if(w in SIZEW){ size=SIZEW[w]; continue; }
+    if(STOPW.has(w)) continue;
+    food.push(w);
+  }
+  return {raw:raw.trim(), food, count, grams, ml, unit, size};
+}
+function candidates(pc){
+  if(!pc.food.length) return [];
+  const want = pc.grams!=null? "g" : pc.ml!=null? "ml" : pc.unit? pc.unit[0] : (pc.count!=null && pc.count>=1? "pc" : null);
+  const scored=[];
+  for(const r of F){ const f=FOODS[r[0]]; const hay=norm(f.es+" "+f.en+" "+f.key+" "+(ALIAS[f.key]||""));
+    let hit=0; for(const w of pc.food) if(wordIn(hay,w)) hit++;
+    if(!hit) continue;
+    let sc=hit/pc.food.length*10;
+    const name=norm(f[lang]); if(pc.food.every(w=>wordIn(name,w))) sc+=2;
+    const nameWords=new Set((name+" "+norm(ALIAS[f.key]||"")).split(/[^a-z0-9]+/));
+    for(const w of pc.food){ const v=[w,w.replace(/s$/,""),w.replace(/es$/,""),w.replace(/ies$/,"y")]; if(v.some(x=>nameWords.has(x)||nameWords.has(x+"s"))) sc+=2; }
+    const isRaw=/\((dry|raw)\)|_cr(udo|uda)?$/.test(name+" "+f.key) || /_cr$/.test(f.key);
+    if(isRaw && !pc.food.some(w=>/^(raw|dry|crud|seco)/.test(w))) sc-=1.5;
+    if(want===null && f.unit==="pc") sc-=1;
+    // prefer the plain version unless the description says fried / breaded / sweet etc.
+    for(const q of ["fried","frito","breaded","rebozado","battered","sweetened","azucarado","condensed","condensada","wild","salvaje","brown","integral","instant"]) if(name.includes(q) && !pc.food.some(w=>q.startsWith(w.slice(0,5)))) sc-=1.2;
+    if(["carne","pescado","arroz_cocido","pasta_cocida","patata_herv","leche","pan_blanco"].includes(f.key)) sc+=0.5;
+    if(want==="pc" && f.unit==="pc") sc+=1.5; if((want==="g"||want==="def") && f.unit==="g") sc+=1; if(want==="ml" && f.unit==="ml") sc+=1.5;
+    if(want==="ml" && f.unit==="pc") sc-=1; if(want==="g" && f.unit==="pc") sc-=2;
+    sc-= name.length/200; // prefer shorter, more generic names
+    scored.push([sc,f,hit]); }
+  scored.sort((a,b)=>b[0]-a[0]);
+  const out=scored.slice(0,5).map(x=>x[1]); out.full = scored.length>0 && scored[0][2]===pc.food.length; return out;
+}
+const WHOLE={pizza:400};
+function qtyFor(pc,f){
+  const n = pc.count!=null? pc.count : 1;
+  if(f.unit==="pc"){ if(pc.grams!=null||pc.ml!=null) return Math.max(1,Math.round(n)); return Math.round(n*(pc.unit&&pc.unit[0]==="pc"?pc.unit[1]:1)*2)/2 || 1; }
+  if(pc.grams!=null) return Math.round(pc.grams);
+  if(pc.ml!=null) return Math.round(pc.ml);
+  if(pc.unit){ const [k,a]=pc.unit; if(k==="ml"||k==="g") return Math.round(n*a); if(k==="def") return Math.round(n*f.def*pc.size); }
+  return Math.round(n*(pc.count!=null && WHOLE[f.key]? WHOLE[f.key] : f.def)*pc.size);
+}
+let suggestions=[]; // {id, pc, cands:[f], key, qty, on, ai?:{name,carbs,kcal}}
+let sid=0;
+function suggest(text){
+  const coarse=text.split(/,|;|\n|\+|\band\b|\by\b|\be\b|\bplus\b|\bin an?\b|\ben un[ao]?\b/i).map(x=>x.trim()).filter(Boolean);
+  const parts=[];
+  for(const c0 of coarse){
+    if(/\b(with|con|de)\b/i.test(c0)){ const whole=candidates(parseChunk(c0)); if(whole.length && whole.full){ parts.push(c0); continue; }
+      const bits=c0.split(/\bwith\b|\bcon\b/i).map(x=>x.trim()).filter(Boolean); parts.push(...bits); }
+    else parts.push(c0);
+  }
+  suggestions=[];
+  for(const part of parts){ const pc=parseChunk(part); const c=candidates(pc);
+    if(c.length) suggestions.push({id:++sid,pc,cands:c,key:c[0].key,qty:qtyFor(pc,c[0]),on:true});
+    else if(pc.food.length) suggestions.push({id:++sid,pc,miss:true}); }
+  renderSugg();
+}
+function suggR(sg){ if(sg.ai) return sg.qty*sg.ai.carbs/100/10; const f=FOODS[sg.key]; return f.g? sg.qty/f.g : 0; }
+function renderSugg(note){
+  const box=$("sugg"); box.hidden=false;
+  if(!suggestions.length){ box.innerHTML=`<div class="smiss">${note||t("sNone")}</div>`; return; }
+  let h="";
+  for(const sg of suggestions){
+    if(sg.miss){ h+=`<div class="smiss">${t("sMiss")} “${esc(sg.pc.raw)}” · ${t("sMissTip")}</div>`; continue; }
+    let name, sub, unit;
+    if(sg.ai){ name=esc(sg.ai.name)+`<span class="estbadge">${t("byAI")}</span>`; sub=`${fmt(sg.ai.carbs,1)} g HC/100 g`; unit="g"; }
+    else { const f=FOODS[sg.key]; name=f[lang]; sub=`${perRText(f)} · “${esc(sg.pc.raw)}”`; unit=unitLabel(f.unit); }
+    const sel = (!sg.ai && sg.cands.length>1)? `<select data-swap="${sg.id}" aria-label="Other matches">${sg.cands.map(c=>`<option value="${c.key}" ${c.key===sg.key?"selected":""}>${c[lang]}</option>`).join("")}</select>` : "";
+    h+=`<div class="srow"><input type="checkbox" data-on="${sg.id}" ${sg.on?"checked":""} aria-label="Include">
+      <div class="sname"><b>${name}</b><span>${sub}</span>${sel}</div>
+      <label class="qty"><input data-sq="${sg.id}" type="number" inputmode="decimal" value="${sg.qty}"><span>${unit}</span></label>
+      <span class="rval">${fmt(suggR(sg),1)} R</span></div>`;
+  }
+  const tot=suggestions.filter(x=>x.on&&!x.miss).reduce((a,x)=>a+suggR(x),0);
+  h+=`<div class="sfoot"><span class="snote">${note||""}</span><button class="btn" type="button" id="sAdd">${t("addSel")} · ${fmt(tot,1)} R</button></div>`;
+  box.innerHTML=h;
+}
+function addSuggestions(){
+  const chosen=suggestions.filter(x=>x.on&&!x.miss); if(!chosen.length) return;
+  if(state.example){ state.items=[]; state.example=false; }
+  for(const sg of chosen){
+    if(sg.ai) state.items.push({id:nextId++,custom:true,name:sg.ai.name+" (Claude)",carbs:sg.ai.carbs,qty:sg.qty,kcal:sg.ai.kcal});
+    else state.items.push({id:nextId++,key:sg.key,qty:sg.qty});
+  }
+  suggestions=[]; $("sugg").hidden=true; $("desc").value=""; renderItems(); renderDose();
+  $("items").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"nearest"});
+}
+// ---------- ASK CLAUDE (only where the viewer can reach Claude; hidden in the installed app)
+let sampleFn=null, aiCtl=null;
+(async()=>{ try{ if(window.claude && window.claude.use){ sampleFn=await window.claude.use("sample"); if(sampleFn) $("descAI").hidden=false; } }catch(e){} })();
+async function askClaude(){
+  const text=$("desc").value.trim(); if(!text||!sampleFn) return;
+  if(aiCtl){ aiCtl.abort(); return; }
+  aiCtl=new AbortController(); const btn=$("descAI"); btn.textContent=t("aiStop");
+  $("sugg").hidden=false; $("sugg").innerHTML=`<div class="snote">${t("thinking")}</div>`;
+  const list=F.map(r=>{ const f=FOODS[r[0]]; return `${f.key}|${f.en}|${f.g?(f.unit==="pc"?(1/f.g).toFixed(2)+" R per piece":f.g+" "+f.unit+" per R"):"free"}|unit:${f.unit}`; }).join("\n");
+  const prompt=`You help a parent count carbohydrate "raciones" (1 R = 10 g available carbohydrate, Spanish diabetes convention) for a 12-year-old with type 1 diabetes.
+The parent describes what he is eating. Map EACH food to the closest item in the FOOD LIST and estimate the quantity in that item's unit (g, ml, or pieces for unit:pc).
+If nothing in the list fits, give an estimate instead: name, grams eaten, carbohydrate per 100 g (available carbs, excluding fibre) and kcal per 100 g, using typical Spanish/European values.
+Interpret portions sensibly for a 12-year-old (e.g. a glass = 200 ml, a scoop of ice cream = 70 g, a slice of pizza = 1/8). Do not add foods that were not mentioned.
+
+Reply with ONLY a JSON array, one object per food, e.g.
+[{"key":"hosomaki","qty":12,"said":"12 salmon maki"},{"name":"Poke bowl rice","grams":180,"carbs_per_100g":28,"kcal_per_100g":150,"said":"rice of the poke bowl"}]
+
+DESCRIPTION:
+${text.slice(0,1500)}
+
+FOOD LIST (key|name|raciones|unit):
+${list}`;
+  try{
+    const out=await sampleFn.json(prompt,{signal:aiCtl.signal,modelTier:"default"});
+    suggestions=[];
+    for(const o of (Array.isArray(out)?out:[])){
+      const said=String(o.said||"");
+      if(o.key && FOODS[o.key]){ const f=FOODS[o.key]; const q=Number(o.qty); suggestions.push({id:++sid,pc:{raw:said||f[lang]},cands:[f],key:f.key,qty:isFinite(q)&&q>0?Math.round(q*10)/10:f.def,on:true}); }
+      else if(o.name && isFinite(Number(o.carbs_per_100g)) && isFinite(Number(o.grams))){
+        suggestions.push({id:++sid,pc:{raw:said},cands:[],ai:{name:String(o.name).slice(0,60),carbs:Math.max(0,Number(o.carbs_per_100g)),kcal:isFinite(Number(o.kcal_per_100g))?Number(o.kcal_per_100g):null},qty:Math.max(0,Math.round(Number(o.grams))),on:true}); }
+    }
+    renderSugg(t("aiNote"));
+  }catch(e){
+    if(e && e.code==="cancelled"){ $("sugg").hidden=true; }
+    else if(e && ["not_granted","sampling_disabled","not_declared","capability_disabled","capability_removed"].includes(e.code)){ $("descAI").hidden=true; sampleFn=null; renderSugg(t("aiOff")); }
+    else { $("sugg").innerHTML=`<div class="smiss">${t("aiFail")}</div>`; }
+  }finally{ aiCtl=null; btn.textContent=t("descAI"); }
+}
+
 let browseCat=null;
 function renderBrowse(){
   $("browse").innerHTML = Object.keys(CATS).map(c=>`<button type="button" data-cat="${c}" aria-pressed="${browseCat===c}">${CATS[c][lang==="es"?0:1]}</button>`).join("");
@@ -860,6 +1036,18 @@ $("items").addEventListener("input",e=>{ const id=e.target.dataset.id; if(!id) r
   renderDose(); });
 $("glucose").addEventListener("input",e=>{ const v=parseFloat(e.target.value); state.glucose=isNaN(v)?null:v; renderGlucoseState(); renderDose(); });
 $("q").addEventListener("input",e=>{ browseCat=null; renderBrowse(); search(e.target.value); });
+$("descGo").addEventListener("click",()=>{ const v=$("desc").value.trim(); if(v) suggest(v); });
+$("desc").addEventListener("keydown",e=>{ if(e.key==="Enter" && !e.shiftKey){ e.preventDefault(); const v=$("desc").value.trim(); if(v) suggest(v); } });
+$("descAI").addEventListener("click",askClaude);
+$("sugg").addEventListener("change",e=>{
+  const sw=e.target.dataset.swap, on=e.target.dataset.on;
+  if(sw){ const sg=suggestions.find(x=>x.id==sw); sg.key=e.target.value; sg.qty=qtyFor(sg.pc,FOODS[sg.key]); renderSugg(); }
+  if(on){ const sg=suggestions.find(x=>x.id==on); sg.on=e.target.checked; renderSugg(); }
+});
+$("sugg").addEventListener("input",e=>{ const q=e.target.dataset.sq; if(!q) return; const sg=suggestions.find(x=>x.id==q); sg.qty=parseFloat(e.target.value)||0;
+  e.target.closest(".srow").querySelector(".rval").textContent=fmt(suggR(sg),1)+" R";
+  const tot=suggestions.filter(x=>x.on&&!x.miss).reduce((a,x)=>a+suggR(x),0); const b=$("sAdd"); if(b) b.textContent=`${t("addSel")} · ${fmt(tot,1)} R`; });
+$("sugg").addEventListener("click",e=>{ if(e.target.id==="sAdd") addSuggestions(); });
 $("q").addEventListener("focus",e=>{ if(e.target.value) search(e.target.value); });
 $("q").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const b=$("results").querySelector("[data-add]"); if(b){ e.preventDefault(); addFood(b.dataset.add);} } if(e.key==="Escape") $("results").hidden=true; });
 $("c-add").addEventListener("click",()=>{
