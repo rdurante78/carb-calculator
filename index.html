@@ -107,6 +107,7 @@ section.block{display:flex;flex-direction:column;gap:10px}
 .describe textarea{width:100%;min-width:0;resize:vertical;border:1.5px solid var(--line);background:var(--bg);color:var(--fg);border-radius:10px;font:400 16px/1.4 var(--font-body);padding:9px 11px}
 .describe textarea:focus{outline:none;border-color:var(--accent)}
 .btn.ai{background:var(--accent);color:var(--accent-ink)}
+a.btn{text-decoration:none;display:inline-flex;align-items:center;gap:6px}
 .sugg{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--line);padding-top:10px}
 .srow{display:grid;grid-template-columns:auto 1fr auto auto;gap:8px;align-items:center}
 .srow .sname{min-width:0}
@@ -208,6 +209,7 @@ body{margin:0}
         <div class="row">
           <button class="btn" id="descGo" type="button" data-t="descGo">Suggest foods</button>
           <button class="btn ai" id="descAI" type="button" hidden data-t="descAI">Ask Claude</button>
+          <a class="btn ai" id="descLink" href="https://claude.ai/new" target="_blank" rel="noopener"><span data-t="descLink">Ask Claude</span> ↗</a>
         </div>
         <div id="sugg" class="sugg" hidden aria-live="polite"></div>
       </div>
@@ -627,7 +629,7 @@ const T = {
   units:"unidades",unitsShort:"U",dose:"Humalog Junior",
   thMeal:"Comida",thPlanU:"Unidades pauta",thPlanR:"Raciones plan",thRatio:"U por R",thFrom:"Desde",thTo:"Hasta",thU:"Unidades",thThresh:"Umbral (mg/dL)",thDose:"Dosis si es mayor",
   base:"Raciones × ratio",corr:"Corrección por glucemia",total:"Total",rounded:"Redondeado a",noG:"Introduce la glucemia para aplicar la corrección.",
-  needTag:"Falta",descLabel:"Describe la comida",descPh:"p. ej. 12 makis de salmón, un vaso de leche y un plátano pequeño",descGo:"Sugerir alimentos",descAI:"Preguntar a Claude",addSel:"Añadir seleccionados",sNone:"No he reconocido nada. Usa palabras sencillas, un alimento por coma, o pregunta a Claude.",sMiss:"No está en la lista:",sMissTip:"pregunta a Claude o añádelo desde la etiqueta.",thinking:"Pensando… (puede tardar un minuto)",aiNote:"Estimación de Claude: revisa las cantidades antes de inyectar.",aiFail:"Claude no ha podido responder. Vuelve a intentarlo o usa la lista.",aiOff:"Claude no está disponible aquí; usa las sugerencias o la lista.",aiStop:"Parar",byAI:"Claude",pcs:"uds",pc1:"unidad",night:"noche",atNight:"por la noche",barK:"Calorías",customKcal:"kcal por 100 g (opcional)",askH:"¿Cuál es su glucemia ahora?",askB:"La dosis depende de la corrección por glucemia. Mide o mira el sensor e introdúcela para ver las unidades.",askBtn:"Introducir glucemia",provisional:"Sin corrección (provisional)",barAsk:"¿Glucemia?",
+  needTag:"Falta",descLink:"Preguntar a Claude",descLabel:"Describe la comida",descPh:"p. ej. 12 makis de salmón, un vaso de leche y un plátano pequeño",descGo:"Sugerir alimentos",descAI:"Estimar con Claude",addSel:"Añadir seleccionados",sNone:"No he reconocido nada. Usa palabras sencillas, un alimento por coma, o pregunta a Claude.",sMiss:"No está en la lista:",sMissTip:"pregunta a Claude o añádelo desde la etiqueta.",thinking:"Pensando… (puede tardar un minuto)",aiNote:"Estimación de Claude: revisa las cantidades antes de inyectar.",aiFail:"Claude no ha podido responder. Vuelve a intentarlo o usa la lista.",aiOff:"Claude no está disponible aquí; usa las sugerencias o la lista.",aiStop:"Parar",byAI:"Claude",pcs:"uds",pc1:"unidad",night:"noche",atNight:"por la noche",barK:"Calorías",customKcal:"kcal por 100 g (opcional)",askH:"¿Cuál es su glucemia ahora?",askB:"La dosis depende de la corrección por glucemia. Mide o mira el sensor e introdúcela para ver las unidades.",askBtn:"Introducir glucemia",provisional:"Sin corrección (provisional)",barAsk:"¿Glucemia?",
   snackRule:"Regla: {d} U si la glucemia es mayor de {t}; si no, 0.",snackNeedG:"Introduce la glucemia: la dosis del almuerzo y la merienda depende de ella.",snackFood:"Raciones de esta toma (informativo)",
   hypoH:"Hipoglucemia: trátala primero",hypoB:"Dale 15 g de glucosa (3 pastillas o 150 ml de zumo) y repite la medición a los 15 minutos. Calcula la insulina cuando esté por encima de 70.",
   muchH:"Bastante más de lo habitual",muchB:"La pauta de {m} está pensada para {r} R y aquí hay {x} R. La dosis se ha escalado con el mismo ratio; confírmalo con el equipo si es frecuente.",
@@ -643,7 +645,7 @@ const T = {
   units:"units",unitsShort:"U",dose:"Humalog Junior",
   thMeal:"Meal",thPlanU:"Plan units",thPlanR:"Plan raciones",thRatio:"U per R",thFrom:"From",thTo:"To",thU:"Units",thThresh:"Threshold (mg/dL)",thDose:"Dose if above",
   base:"Raciones × ratio",corr:"Glucose correction",total:"Total",rounded:"Rounded to",noG:"Enter glucose to apply the correction.",
-  needTag:"Needed",descLabel:"Describe the meal",descPh:"e.g. 12 salmon maki, a glass of milk and a small banana",descGo:"Suggest foods",descAI:"Ask Claude",addSel:"Add selected",sNone:"Nothing recognised. Try simpler words, one food per comma, or Ask Claude.",sMiss:"Not in the list:",sMissTip:"use Ask Claude or Add from a food label.",thinking:"Thinking… (can take up to a minute)",aiNote:"Claude estimate: check the amounts before dosing.",aiFail:"Claude couldn't answer this time. Try again or use the list.",aiOff:"Claude isn't available here; use the suggestions or the list.",aiStop:"Stop",byAI:"Claude",pcs:"pcs",pc1:"piece",night:"night",atNight:"at night",barK:"Calories",customKcal:"kcal per 100 g (optional)",askH:"What is his glucose now?",askB:"The dose depends on the glucose correction. Check the sensor or a finger-prick and enter it to see the units.",askBtn:"Enter glucose",provisional:"Without correction (provisional)",barAsk:"Glucose?",
+  needTag:"Needed",descLink:"Ask Claude",descLabel:"Describe the meal",descPh:"e.g. 12 salmon maki, a glass of milk and a small banana",descGo:"Suggest foods",descAI:"Estimate with Claude",addSel:"Add selected",sNone:"Nothing recognised. Try simpler words, one food per comma, or Ask Claude.",sMiss:"Not in the list:",sMissTip:"use Ask Claude or Add from a food label.",thinking:"Thinking… (can take up to a minute)",aiNote:"Claude estimate: check the amounts before dosing.",aiFail:"Claude couldn't answer this time. Try again or use the list.",aiOff:"Claude isn't available here; use the suggestions or the list.",aiStop:"Stop",byAI:"Claude",pcs:"pcs",pc1:"piece",night:"night",atNight:"at night",barK:"Calories",customKcal:"kcal per 100 g (optional)",askH:"What is his glucose now?",askB:"The dose depends on the glucose correction. Check the sensor or a finger-prick and enter it to see the units.",askBtn:"Enter glucose",provisional:"Without correction (provisional)",barAsk:"Glucose?",
   snackRule:"Rule: {d} U if glucose is above {t}; otherwise 0.",snackNeedG:"Enter glucose: the snack dose depends on it.",snackFood:"Raciones in this snack (for information)",
   hypoH:"Low glucose: treat it first",hypoB:"Give 15 g of glucose (3 tablets or 150 ml juice) and recheck after 15 minutes. Work out the insulin once he is above 70.",
   muchH:"Much more than usual",muchB:"The {m} plan is built for {r} R and this is {x} R. The dose has been scaled with the same ratio; check with the team if this is frequent.",
@@ -909,6 +911,17 @@ function addSuggestions(){
   suggestions=[]; $("sugg").hidden=true; $("desc").value=""; renderItems(); renderDose();
   $("items").scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"nearest"});
 }
+// ---------- ASK CLAUDE IN A CLAUDE WINDOW (installed app): opens claude.ai with the question filled in
+function claudeLink(){
+  const d=$("desc").value.trim();
+  const meal=MEALS.find(m=>m.k===state.meal);
+  const q = d
+    ? `My 12-year-old son has type 1 diabetes and we count carbohydrate "raciones" (1 ración = 10 g of available carbohydrate, Spanish convention). For ${meal.en.toLowerCase()} he is having: ${d}\n\nPlease estimate the raciones for each food and the total. Give the weight or number of pieces you assumed for each, and say which items are uncertain so I can weigh them. Don't suggest insulin doses; I calculate those with his team's plan.`
+    : `My 12-year-old son has type 1 diabetes and we count carbohydrate "raciones" (1 ración = 10 g of available carbohydrate, Spanish convention). `;
+  $("descLink").href="https://claude.ai/new?q="+encodeURIComponent(q);
+}
+$("desc").addEventListener("input",claudeLink);
+
 // ---------- ASK CLAUDE (only where the viewer can reach Claude; hidden in the installed app)
 let sampleFn=null, aiCtl=null;
 (async()=>{ try{ if(window.claude && window.claude.use){ sampleFn=await window.claude.use("sample"); if(sampleFn) $("descAI").hidden=false; } }catch(e){} })();
@@ -1020,7 +1033,7 @@ function showTab(which){
 
 // ---------- EVENTS
 document.addEventListener("click",e=>{
-  const m=e.target.closest("[data-meal]"); if(m){ state.meal=m.dataset.meal; renderMeals(); renderDose(); return; }
+  const m=e.target.closest("[data-meal]"); if(m){ state.meal=m.dataset.meal; renderMeals(); renderDose(); claudeLink(); return; }
   const a=e.target.closest("[data-add]"); if(a){ addFood(a.dataset.add); return; }
   const bc=e.target.closest("[data-cat]"); if(bc){ showCat(bc.dataset.cat); return; }
   const d=e.target.closest("[data-del]"); if(d){ state.items=state.items.filter(i=>i.id!=d.dataset.del); if(!state.items.length) state.example=false; renderItems(); renderDose(); return; }
@@ -1067,7 +1080,7 @@ $("tab-set").addEventListener("click",()=>showTab("set"));
 // JSON.parse(JSON.stringify(Infinity)) → null; restore it
 DEFAULTS.corr[DEFAULTS.corr.length-1].max=Infinity;
 cfg.corr = cfg.corr.map(c=>({max:(c.max===null||c.max===undefined)?Infinity:c.max,u:c.u}));
-renderAll();
+renderAll(); claudeLink();
 })();
 </script>
 
