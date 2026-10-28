@@ -73,6 +73,10 @@ section.block{display:flex;flex-direction:column;gap:10px}
 .results{position:absolute;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1.5px solid var(--line);border-radius:12px;max-height:320px;overflow-y:auto;z-index:5;box-shadow:0 8px 24px rgba(0,0,0,.18)}
 .results button{display:flex;justify-content:space-between;gap:12px;width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--fg);font:400 15px var(--font-body);padding:11px 14px;cursor:pointer}
 .results button:last-child{border-bottom:0}
+.browse{display:flex;gap:6px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.browse::-webkit-scrollbar{display:none}
+.browse button{flex-shrink:0;border:1px solid var(--line);background:var(--surface);color:var(--muted);font:700 13px var(--font-body);padding:6px 11px;border-radius:999px;cursor:pointer;white-space:nowrap}
+.browse button[aria-pressed="true"]{border-color:var(--fg);color:var(--fg)}
 .results button:hover,.results button:focus{background:var(--sunk);outline:none}
 .results .r{color:var(--muted);white-space:nowrap;font-size:13px}
 .results .cat{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 14px 4px;background:var(--sunk)}
@@ -185,6 +189,7 @@ body{margin:0}
         <div class="field"><input id="q" type="search" autocomplete="off" data-tp="searchPh" placeholder="Buscar alimento (pan, leche, kiwi…)"></div>
         <div id="results" class="results" hidden></div>
       </div>
+      <div class="browse" id="browse" aria-label="Browse by category"></div>
       <div class="items" id="items"></div>
       <details class="custom" id="customBox">
         <summary data-t="customTitle">Añadir desde la etiqueta</summary>
@@ -280,7 +285,7 @@ const F = [
  ["harina","Harina de trigo o maíz","Wheat or corn flour",15,"g","cereal","FD","1 cucharada rasa ≈ 14 g","1 level tbsp ≈ 14 g",15],
  ["pan_rallado","Pan rallado","Breadcrumbs",15,"g","cereal","FD","","",15],
  ["palomitas","Palomitas","Popcorn",20,"g","cereal","FD","","",20],
- ["pizza","Pizza","Pizza",40,"g","cereal","FD","1/4 de pizza ≈ 100 g","1/4 pizza ≈ 100 g",100],
+ ["pizza","Pizza","Pizza",40,"g","plato","FD","1/4 de pizza ≈ 100 g","1/4 pizza ≈ 100 g",100],
  // Legumbres y tubérculos
  ["lentejas_c","Lentejas (cocidas)","Lentils (cooked)",50,"g","legumbre","HM","","",200],
  ["lentejas_cr","Lentejas (crudas)","Lentils (dry)",20,"g","legumbre","HM","","",60],
@@ -372,9 +377,9 @@ const F = [
  // Dulces
  ["glucosa","Pastillas de glucosa","Glucose tablets",10,"g","dulce","FD","","",10],
  ["azucar","Azúcar","Sugar",10,"g","dulce","FD","1 sobre ≈ 8 g","1 sachet ≈ 8 g",8],
- ["miel","Miel","Honey",13,"g","dulce","FD","1 cucharada ≈ 18 g","1 tbsp ≈ 18 g",18],
- ["mermelada","Mermelada","Jam",20,"g","dulce","FD","1 cucharada ≈ 25 g","1 tbsp ≈ 25 g",20],
- ["nocilla","Crema de cacao (Nocilla, Nutella)","Chocolate spread",25,"g","dulce","FD","1 cucharada ≈ 25 g","1 tbsp ≈ 25 g",20],
+ ["miel","Miel","Honey",13,"g","salsa","FD","1 cucharada ≈ 18 g","1 tbsp ≈ 18 g",18],
+ ["mermelada","Mermelada","Jam",20,"g","salsa","FD","1 cucharada ≈ 25 g","1 tbsp ≈ 25 g",20],
+ ["nocilla","Crema de cacao (Nocilla, Nutella)","Chocolate spread",25,"g","salsa","FD","1 cucharada ≈ 25 g","1 tbsp ≈ 25 g",20],
  ["choco_leche","Chocolate con leche o blanco","Milk / white chocolate",17,"g","dulce","FD","1 onza ≈ 8 g","1 square ≈ 8 g",16],
  ["choco_negro","Chocolate negro","Dark chocolate",25,"g","dulce","FD","1 onza ≈ 8 g","1 square ≈ 8 g",16],
  ["croissant","Cruasán","Croissant",20,"g","dulce","FD","1 unidad ≈ 60 g","1 croissant ≈ 60 g",60],
@@ -383,12 +388,173 @@ const F = [
  ["donut","Donut","Doughnut",23,"g","dulce","FD","1 unidad ≈ 58 g","1 doughnut ≈ 58 g",58],
  ["barrita","Barrita de cereales","Cereal bar",20,"g","dulce","FD","1 unidad ≈ 25 g","1 bar ≈ 25 g",25],
  ["golosinas","Golosinas / gominolas","Sweets / gummies",18,"g","dulce","FD","","",20],
- ["ketchup","Ketchup","Ketchup",50,"g","dulce","FD","1 cucharada ≈ 15 g","1 tbsp ≈ 15 g",15],
- ["tomate_frito","Salsa de tomate comercial","Tomato sauce (jar)",100,"g","dulce","FD","3 cucharadas ≈ 50 g","3 tbsp ≈ 50 g",50],
- ["tortilla_pat","Tortilla de patatas","Spanish potato omelette",120,"g","dulce","FD","1 pincho ≈ 100 g","1 slice ≈ 100 g",100],
- ["croquetas","Croquetas","Croquettes",50,"g","dulce","FD","3 croquetas ≈ 90 g","3 croquettes ≈ 90 g",90],
- ["sushi","Sushi","Sushi",45,"g","dulce","FD","1 pieza ≈ 20–40 g","1 piece ≈ 20–40 g",120],
- ["lasana","Lasaña","Lasagne",100,"g","dulce","FD","","",260],
+ ["ketchup","Ketchup","Ketchup",50,"g","salsa","FD","1 cucharada ≈ 15 g","1 tbsp ≈ 15 g",15],
+ ["tomate_frito","Salsa de tomate comercial","Tomato sauce (jar)",100,"g","salsa","FD","3 cucharadas ≈ 50 g","3 tbsp ≈ 50 g",50],
+ ["tortilla_pat","Tortilla de patatas","Spanish potato omelette",120,"g","plato","FD","1 pincho ≈ 100 g","1 slice ≈ 100 g",100],
+ ["croquetas","Croquetas","Croquettes",50,"g","plato","FD","3 croquetas ≈ 90 g","3 croquettes ≈ 90 g",90],
+ ["sushi","Sushi","Sushi",45,"g","plato","FD","1 pieza ≈ 20–40 g","1 piece ≈ 20–40 g",120],
+ ["lasana","Lasaña","Lasagne",100,"g","plato","FD","","",260],
+ // ---- Added Oct 2026: more FD table items, dishes, takeaway and per-piece foods (unit "pc": g = pieces per ración)
+ ["pan_payes","Pan de payés / chapata","Rustic bread / ciabatta",20,"g","pan","FD","","",50],
+ ["pan_leche","Pan de leche / brioche","Milk bread / brioche",20,"g","pan","EST","1 unidad ≈ 35 g","1 roll ≈ 35 g",35],
+ ["bagel","Bagel","Bagel",20,"g","pan","EST","1 unidad ≈ 90 g","1 bagel ≈ 90 g",90],
+ ["pita","Pan de pita","Pitta bread",20,"g","pan","EST","1 unidad ≈ 60 g","1 pitta ≈ 60 g",60],
+ ["wrap_trigo","Tortilla de trigo (wrap)","Wheat tortilla (wrap)",20,"g","pan","EST","1 wrap ≈ 60 g","1 wrap ≈ 60 g",60],
+ ["rebanada_molde","Pan de molde (rebanada)","Sliced bread (slice)",0.8,"pc","pan","FD","1 rebanada ≈ 25 g ≈ 1,2 R","1 slice ≈ 25 g ≈ 1.2 R",2],
+ ["biscote_pc","Biscote (unidad)","Rusk / biscotte (piece)",1.6,"pc","pan","FD","1 biscote ≈ 0,6 R","1 rusk ≈ 0.6 R",2],
+ ["tortita_arroz","Tortitas de arroz (unidad)","Rice cakes (piece)",1.5,"pc","pan","EST","1 tortita ≈ 8 g","1 cake ≈ 8 g",2],
+ ["maria_pc","Galleta María (unidad)","Marie biscuit (piece)",2.5,"pc","pan","FD","1 galleta ≈ 0,4 R","1 biscuit ≈ 0.4 R",3],
+ ["digestive_pc","Galleta digestiva (unidad)","Digestive biscuit (piece)",1.4,"pc","pan","FD","1 galleta ≈ 0,7 R","1 biscuit ≈ 0.7 R",2],
+ ["principe_pc","Galleta tipo Príncipe (unidad)","Chocolate-filled biscuit (piece)",1,"pc","pan","FD","1 galleta ≈ 1 R","1 biscuit ≈ 1 R",2],
+ ["oreo_pc","Galleta tipo Oreo (unidad)","Oreo-type cookie (piece)",1.3,"pc","pan","EST","1 galleta ≈ 0,75 R","1 cookie ≈ 0.75 R",2],
+ ["galleta_sin","Galletas sin azúcar","Sugar-free biscuits",18,"g","pan","FD","","",20],
+ ["arroz_hinchado","Arroz hinchado (desayuno)","Puffed rice cereal",12,"g","pan","FD","","",30],
+ ["cereales_choco","Cereales de chocolate","Chocolate cereal",13,"g","pan","EST","","",30],
+ ["porridge","Gachas de avena (cocidas)","Porridge (cooked)",34,"g","pan","FD","","",150],
+ ["tortita_amer","Tortita americana / pancake (unidad)","Pancake (piece)",1,"pc","pan","EST","1 tortita ≈ 40 g ≈ 1 R","1 pancake ≈ 40 g ≈ 1 R",2],
+ ["gofre","Gofre (unidad)","Waffle (piece)",0.7,"pc","pan","EST","1 gofre ≈ 35 g ≈ 1,5 R","1 waffle ≈ 35 g ≈ 1.5 R",1],
+ ["arroz_int_crudo","Arroz integral (crudo)","Brown rice (raw)",13,"g","cereal","FD","pesar antes de cocer","weigh before cooking",60],
+ ["arroz_salvaje","Arroz salvaje (cocido)","Wild rice (cooked)",34,"g","cereal","FD","","",120],
+ ["pasta_int","Pasta integral (cocida)","Wholewheat pasta (cooked)",50,"g","cereal","EST","","",200],
+ ["pasta_huevo","Pasta al huevo (cruda)","Egg pasta (dry)",16,"g","cereal","FD","","",75],
+ ["gnocchi","Ñoquis (cocidos)","Gnocchi (cooked)",30,"g","cereal","EST","","",150],
+ ["noodles","Fideos de trigo / noodles (cocidos)","Wheat noodles (cooked)",45,"g","cereal","EST","","",150],
+ ["fideos_arroz","Fideos de arroz (cocidos)","Rice noodles (cooked)",50,"g","cereal","FD","","",150],
+ ["fideos_soja","Fideos de soja (cocidos)","Glass noodles (cooked)",40,"g","cereal","FD","","",120],
+ ["cuscus_crudo","Cuscús (crudo)","Couscous (dry)",15,"g","cereal","FD","","",60],
+ ["quinoa_cruda","Quinoa (cruda)","Quinoa (raw)",19,"g","cereal","FD","","",60],
+ ["bulgur","Bulgur (cocido)","Bulgur (cooked)",55,"g","cereal","EST","","",150],
+ ["trigo_sarraceno","Trigo sarraceno (cocido)","Buckwheat (cooked)",42,"g","cereal","FD","","",120],
+ ["cebada","Cebada (cocida)","Barley (cooked)",42,"g","cereal","FD","","",120],
+ ["mijo","Mijo (cocido)","Millet (cooked)",53,"g","cereal","FD","","",120],
+ ["semola_c","Sémola de trigo (cocida)","Semolina (cooked)",90,"g","cereal","FD","","",150],
+ ["tapioca","Tapioca (cocida)","Tapioca (cooked)",33,"g","cereal","FD","","",100],
+ ["maiz_sin","Maíz en lata sin azúcar","Sweetcorn,no added sugar",90,"g","legumbre","FD","","",80],
+ ["polenta","Polenta (cocida)","Polenta (cooked)",65,"g","cereal","EST","","",150],
+ ["garbanzos_cr","Garbanzos (crudos)","Chickpeas (dry)",20,"g","legumbre","FD","","",60],
+ ["judias_cr","Judías blancas (crudas)","White beans (dry)",20,"g","legumbre","FD","","",60],
+ ["judias_rojas","Alubias rojas / negras (cocidas)","Kidney / black beans (cooked)",50,"g","legumbre","EST","","",150],
+ ["soja_c","Soja (hervida)","Soybeans (boiled)",100,"g","legumbre","FD","","",100],
+ ["edamame","Edamame (granos pelados)","Edamame (shelled)",250,"g","legumbre","EST","caja con vaina 150 g ≈ 0,3 R","box in pods 150 g ≈ 0.3 R",75],
+ ["hummus","Hummus","Hummus",100,"g","legumbre","EST","","",50],
+ ["falafel","Falafel","Falafel",33,"g","legumbre","EST","1 unidad ≈ 20 g","1 ball ≈ 20 g",60],
+ ["pure_copos","Puré de patata (copos,en seco)","Instant mash (dry flakes)",15,"g","patata","FD","","",30],
+ ["patata_salteada","Patatas salteadas","Sautéed potatoes",32,"g","patata","EST","","",100],
+ ["bravas","Patatas bravas","Patatas bravas",30,"g","patata","EST","ración de bar ≈ 150 g","bar portion ≈ 150 g",150],
+ ["yuca","Yuca (cocida)","Cassava (cooked)",33,"g","patata","FD","","",100],
+ ["cuajada","Cuajada","Curd (cuajada)",200,"g","lacteo","FD","","",125],
+ ["yog_desn_sab","Yogur desnatado de sabores","Low-fat flavoured yogurt",125,"g","lacteo","FD","1 yogur ≈ 1 R","1 pot ≈ 1 R",125],
+ ["yog_liquido","Yogur líquido / bebible","Drinking yogurt",70,"ml","lacteo","FD","1 botella 200 ml ≈ 3 R","200 ml bottle ≈ 3 R",200],
+ ["actimel","Yogur tipo Actimel (unidad)","Actimel-type shot (bottle)",1,"pc","lacteo","FD","1 unidad ≈ 1 R","1 bottle ≈ 1 R",1],
+ ["yog_nat_pc","Yogur natural (unidad)","Plain yogurt (pot)",2,"pc","lacteo","HM","1 yogur ≈ 0,5 R","1 pot ≈ 0.5 R",1],
+ ["yog_azuc_pc","Yogur azucarado o de sabores (unidad)","Sweetened yogurt (pot)",0.67,"pc","lacteo","HM","1 yogur ≈ 1,5 R","1 pot ≈ 1.5 R",1],
+ ["petit_pc","Petit suisse (unidad)","Petit suisse (pot)",1.25,"pc","lacteo","FD","1 unidad ≈ 0,8 R","1 pot ≈ 0.8 R",1],
+ ["leche_cond","Leche condensada","Condensed milk",20,"g","lacteo","FD","1 cucharada ≈ 20 g","1 tbsp ≈ 20 g",20],
+ ["leche_polvo","Leche en polvo","Milk powder",25,"g","lacteo","FD","","",25],
+ ["helado_sin","Helado sin azúcar añadido","No-added-sugar ice cream",100,"g","dulce","FD","","",100],
+ ["polo","Polo de hielo (unidad)","Ice lolly (piece)",0.5,"pc","dulce","FD","1 polo ≈ 2 R","1 lolly ≈ 2 R",1],
+ ["helado_choco","Helado de chocolate","Chocolate ice cream",36,"g","dulce","EST","1 bola ≈ 70 g","1 scoop ≈ 70 g",70],
+ ["cucurucho","Cucurucho de barquillo (unidad)","Wafer cone (piece)",1,"pc","dulce","EST","1 cucurucho ≈ 1 R","1 cone ≈ 1 R",1],
+ ["bebida_avena","Bebida de avena","Oat drink",140,"ml","bebida","EST","","",200],
+ ["bebida_almendra","Bebida de almendra sin azúcar","Unsweetened almond drink",0,"ml","libre","EST","","",200],
+ ["caqui","Caqui","Persimmon (kaki)",60,"g","fruta","EST","","",150],
+ ["pomelo","Pomelo","Grapefruit",125,"g","fruta","EST","pesar pelado","weigh peeled",150],
+ ["mandarina_pc","Mandarina (unidad)","Mandarin (piece)",1.4,"pc","fruta","FD","1 mediana pelada ≈ 0,7 R","1 medium peeled ≈ 0.7 R",2],
+ ["litchi","Lichis","Lychees",70,"g","fruta","FD","6 lichis ≈ 70 g","6 lychees ≈ 70 g",70],
+ ["nispero","Níspero","Loquat",100,"g","fruta","FD","","",100],
+ ["grosella","Grosellas","Redcurrants",200,"g","fruta","FD","","",50],
+ ["coco","Coco fresco","Fresh coconut",300,"g","fruta","FD","","",35],
+ ["manzana_asada","Manzana asada / compota","Baked apple / apple compote",50,"g","fruta","FD","","",120],
+ ["pina_conserva","Piña en almíbar","Tinned pineapple in syrup",85,"g","fruta","FD","","",100],
+ ["macedonia","Macedonia de frutas (lata)","Tinned fruit cocktail",60,"g","fruta","EST","","",100],
+ ["orejones","Orejones (albaricoque seco)","Dried apricots",15,"g","fruta","FD","1 unidad ≈ 5 g","1 piece ≈ 5 g",15],
+ ["ciruela_pasa","Ciruelas pasas","Prunes",15,"g","fruta","FD","1 unidad ≈ 8 g","1 prune ≈ 8 g",15],
+ ["higo_seco","Higos secos","Dried figs",15,"g","fruta","FD","1 unidad ≈ 8 g","1 fig ≈ 8 g",15],
+ ["datil_pc","Dátil (unidad)","Date (piece)",1.4,"pc","fruta","FD","1 dátil ≈ 0,7 R","1 date ≈ 0.7 R",2],
+ ["castanas","Castañas asadas","Roast chestnuts",25,"g","fruta","FD","1 castaña ≈ 8 g","1 chestnut ≈ 8 g",50],
+ ["aros_cebolla","Aros de cebolla rebozados","Onion rings (battered)",40,"g","verdura","EST","","",80],
+ ["setas","Setas","Wild mushrooms",300,"g","verdura","FD","","",150],
+ ["repollo","Repollo / col","Cabbage",300,"g","verdura","FD","","",150],
+ ["nabo","Nabo","Turnip",300,"g","verdura","FD","","",100],
+ ["rabano","Rábanos","Radishes",300,"g","verdura","FD","","",50],
+ ["apio","Apio","Celery",300,"g","verdura","FD","","",50],
+ ["endibia","Endibia","Endive",300,"g","verdura","FD","","",100],
+ ["brotes_soja","Brotes de soja","Bean sprouts",300,"g","verdura","FD","","",100],
+ ["palmitos","Palmitos","Hearts of palm",200,"g","verdura","FD","","",50],
+ ["zanahoria_lata","Zanahoria en conserva","Tinned carrots",225,"g","verdura","FD","","",100],
+ ["crema_verdura","Crema de verduras","Vegetable soup (blended)",170,"ml","verdura","EST","1 plato ≈ 250 ml","1 bowl ≈ 250 ml",250],
+ ["salmorejo","Salmorejo","Salmorejo",100,"ml","verdura","EST","","",200],
+ ["anacardos","Anacardos","Cashews",40,"g","seco","EST","1 puñado ≈ 20 g","1 handful ≈ 20 g",20],
+ ["sesamo","Sésamo","Sesame seeds",100,"g","seco","FD","","",10],
+ ["quicos","Maíz tostado (quicos)","Roasted corn snack",20,"g","seco","FD","bolsa pequeña ≈ 40 g","small bag ≈ 40 g",40],
+ ["lata_refresco","Refresco azucarado (lata 330 ml)","Sugary soft drink (330 ml can)",0.3,"pc","bebida","FD","1 lata ≈ 3,3 R","1 can ≈ 3.3 R",1],
+ ["brick_zumo","Zumo en brick (200 ml)","Juice carton (200 ml)",0.5,"pc","bebida","FD","1 brick ≈ 2 R","1 carton ≈ 2 R",1],
+ ["brick_batido","Batido de cacao en brick (200 ml)","Chocolate milk carton (200 ml)",0.5,"pc","bebida","FD","1 brick ≈ 2 R","1 carton ≈ 2 R",1],
+ ["energetica","Bebida energética","Energy drink",80,"ml","bebida","FD","1 lata 250 ml ≈ 3 R","250 ml can ≈ 3 R",250],
+ ["tonica","Tónica / bitter","Tonic water / bitter",100,"ml","bebida","FD","","",200],
+ ["mosto","Mosto","Grape juice (mosto)",70,"ml","bebida","FD","","",100],
+ ["limonada","Limonada","Lemonade",100,"ml","bebida","EST","","",250],
+ ["cacao_polvo","Cacao en polvo azucarado (ColaCao,Nesquik)","Sweetened cocoa powder",12,"g","bebida","FD","1 cucharada ≈ 8 g","1 tsp-heaped ≈ 8 g",15],
+ ["cacao_puro","Cacao puro en polvo","Unsweetened cocoa powder",22,"g","bebida","FD","","",8],
+ ["glucosa_pc","Pastilla de glucosa Dextro (unidad)","Dextro glucose tablet (piece)",1.8,"pc","dulce","FD","1 pastilla ≈ 0,55 R","1 tablet ≈ 0.55 R",3],
+ ["churros","Churros","Churros",25,"g","dulce","FD","2 churros ≈ 25 g","2 churros ≈ 25 g",50],
+ ["palmera","Palmera de hojaldre","Palmier pastry",22,"g","dulce","EST","1 unidad ≈ 60 g","1 palmier ≈ 60 g",60],
+ ["ensaimada","Ensaimada","Ensaimada",23,"g","dulce","FD","1 unidad ≈ 70 g","1 piece ≈ 70 g",70],
+ ["bolleria","Bollería en general","Pastries (general)",20,"g","dulce","FD","","",60],
+ ["croissant_pc","Cruasán (unidad)","Croissant (piece)",0.33,"pc","dulce","FD","1 cruasán ≈ 3 R","1 croissant ≈ 3 R",1],
+ ["magdalena_pc","Magdalena (unidad)","Magdalena muffin (piece)",0.5,"pc","dulce","FD","1 magdalena ≈ 2 R","1 muffin ≈ 2 R",1],
+ ["donut_pc","Donut (unidad)","Doughnut (piece)",0.4,"pc","dulce","FD","1 donut ≈ 2,5 R","1 doughnut ≈ 2.5 R",1],
+ ["brownie","Brownie","Brownie",20,"g","dulce","EST","","",60],
+ ["tarta_choco","Pastel / tarta de chocolate","Chocolate cake",25,"g","dulce","FD","1 porción ≈ 100 g","1 slice ≈ 100 g",100],
+ ["tarta_manzana","Tarta de manzana","Apple tart",25,"g","dulce","FD","1 porción ≈ 100 g","1 slice ≈ 100 g",100],
+ ["pastel_crema","Pastel de crema","Cream cake",35,"g","dulce","FD","1 porción ≈ 100 g","1 slice ≈ 100 g",100],
+ ["crema_pastelera","Crema pastelera","Custard cream",40,"g","dulce","FD","","",40],
+ ["gelatina","Gelatina comercial","Jelly dessert",62,"g","dulce","FD","1 unidad ≈ 125 g","1 pot ≈ 125 g",125],
+ ["natillas_pc","Natillas o flan (unidad)","Custard or crème caramel (pot)",0.4,"pc","dulce","FD","1 unidad ≈ 2,5 R","1 pot ≈ 2.5 R",1],
+ ["turron","Turrón","Turrón (nougat)",25,"g","dulce","FD","1/6 tableta ≈ 50 g","1/6 bar ≈ 50 g",25],
+ ["mazapan","Mazapán","Marzipan",25,"g","dulce","FD","","",25],
+ ["caramelo","Caramelos","Hard sweets",12,"g","dulce","FD","1 caramelo ≈ 5 g","1 sweet ≈ 5 g",10],
+ ["regaliz","Regaliz","Liquorice",15,"g","dulce","FD","","",15],
+ ["merengue","Merengue","Meringue",11,"g","dulce","FD","","",10],
+ ["membrillo","Dulce de membrillo","Quince paste",20,"g","dulce","FD","","",20],
+ ["barrita_pc","Barrita de cereales (unidad)","Cereal bar (piece)",0.8,"pc","dulce","FD","1 barrita ≈ 1,25 R","1 bar ≈ 1.25 R",1],
+ ["chocolatina","Chocolatina (KitKat,Twix…)","Chocolate bar (KitKat,Twix…)",17,"g","dulce","EST","","",40],
+ ["crema_cacahuete","Crema de cacahuete","Peanut butter",100,"g","salsa","FD","1 cucharada ≈ 20 g","1 tbsp ≈ 20 g",20],
+ ["bechamel","Salsa bechamel","Béchamel sauce",100,"g","salsa","FD","3 cucharadas ≈ 50 g","3 tbsp ≈ 50 g",50],
+ ["barbacoa","Salsa barbacoa","Barbecue sauce",25,"g","salsa","EST","1 cucharada ≈ 15 g","1 tbsp ≈ 15 g",15],
+ ["boloñesa","Salsa boloñesa","Bolognese sauce",150,"g","salsa","FD","","",100],
+ ["teriyaki","Salsa teriyaki / agridulce","Teriyaki / sweet-and-sour sauce",30,"g","salsa","EST","1 cucharada ≈ 15 g","1 tbsp ≈ 15 g",15],
+ ["mayonesa","Mayonesa,alioli,mostaza,soja","Mayonnaise,aioli,mustard,soy sauce",0,"g","libre","FD","","",15],
+ ["pesto","Pesto","Pesto",0,"g","libre","EST","","",20],
+ ["vinagre_modena","Vinagre de Módena (crema)","Balsamic glaze",15,"g","salsa","FD","","",10],
+ ["hosomaki","Maki pequeño / hosomaki (pieza)","Small maki / hosomaki (piece)",2.5,"pc","plato","FD","1 pieza ≈ 0,4 R","1 piece ≈ 0.4 R",6],
+ ["uramaki","California roll / uramaki (pieza)","California roll / uramaki (piece)",1.6,"pc","plato","FD","1 pieza ≈ 0,6 R","1 piece ≈ 0.6 R",8],
+ ["nigiri","Nigiri (pieza)","Nigiri (piece)",1.4,"pc","plato","FD","1 pieza ≈ 0,7 R","1 piece ≈ 0.7 R",4],
+ ["gyoza","Gyoza (pieza)","Gyoza dumpling (piece)",2.5,"pc","plato","EST","1 pieza ≈ 0,4 R","1 piece ≈ 0.4 R",6],
+ ["arroz_frito","Arroz frito / tres delicias","Fried rice",33,"g","plato","EST","","",200],
+ ["paella","Paella / arroz con marisco","Paella",50,"g","plato","EST","1 plato ≈ 300 g","1 plate ≈ 300 g",250],
+ ["fideua","Fideuá","Fideuà (noodle paella)",50,"g","plato","EST","","",250],
+ ["macarrones_tomate","Macarrones con tomate","Pasta with tomato sauce",45,"g","plato","EST","1 plato ≈ 250 g","1 plate ≈ 250 g",250],
+ ["espaguetis_bol","Espaguetis a la boloñesa","Spaghetti bolognese",50,"g","plato","EST","1 plato ≈ 300 g","1 plate ≈ 300 g",300],
+ ["lentejas_guiso","Lentejas guisadas (con patata)","Lentil stew (with potato)",85,"g","plato","EST","1 plato ≈ 300 g","1 plate ≈ 300 g",300],
+ ["canelones","Canelones con bechamel","Cannelloni with béchamel",100,"g","plato","FD","3 canelones ≈ 250 g","3 cannelloni ≈ 250 g",250],
+ ["pizza_porcion","Pizza (porción de 8)","Pizza (1/8 slice)",0.8,"pc","plato","FD","1 porción ≈ 1,25 R","1 slice ≈ 1.25 R",2],
+ ["mini_burger_pan","Pan de mini hamburguesa (unidad)","Mini burger / slider bun (piece)",0.7,"pc","plato","EST","1 pan pequeño ≈ 1,4 R","1 small bun ≈ 1.4 R",3],
+ ["burger_pan","Pan de hamburguesa (unidad)","Burger bun (piece)",0.22,"pc","plato","FD","1 pan ≈ 80 g ≈ 4,5 R","1 bun ≈ 80 g ≈ 4.5 R",1],
+ ["nuggets","Nuggets de pollo (unidad)","Chicken nuggets (piece)",3.3,"pc","plato","EST","1 nugget ≈ 0,3 R","1 nugget ≈ 0.3 R",6],
+ ["varitas","Varitas de pescado (unidad)","Fish fingers (piece)",2,"pc","plato","EST","1 varita ≈ 0,5 R","1 finger ≈ 0.5 R",4],
+ ["croqueta_pc","Croqueta (unidad)","Croquette (piece)",1.7,"pc","plato","FD","1 croqueta ≈ 0,6 R","1 croquette ≈ 0.6 R",3],
+ ["empanadilla_pc","Empanadilla (unidad)","Empanadilla pastry (piece)",1.25,"pc","plato","FD","1 unidad ≈ 0,8 R","1 piece ≈ 0.8 R",2],
+ ["calamares","Calamares a la romana","Battered squid rings",120,"g","plato","FD","4 anillas ≈ 1 R","4 rings ≈ 1 R",120],
+ ["rebozado","Pollo o pescado rebozado","Breaded chicken or fish",60,"g","plato","EST","","",120],
+ ["nachos","Nachos (totopos)","Tortilla chips (nachos)",15,"g","plato","EST","","",40],
+ ["kebab_carne","Carne de kebab / shawarma (sin pan)","Kebab meat (no bread)",0,"g","libre","EST","contar el pan aparte","count the bread separately",150],
+ ["surimi","Surimi (palitos de cangrejo)","Surimi (crab sticks)",100,"g","plato","FD","1 palito ≈ 20 g","1 stick ≈ 20 g",60],
+ ["smoothie_fruta","Smoothie / batido de frutas","Fruit smoothie",85,"ml","bebida","EST","1 vaso ≈ 250 ml ≈ 3 R","1 glass ≈ 250 ml ≈ 3 R",250],
+ ["smoothie_yogur","Smoothie con yogur o leche","Smoothie with yogurt or milk",90,"ml","bebida","EST","1 vaso ≈ 250 ml","1 glass ≈ 250 ml",250],
+ ["batido_helado","Batido de helado (milkshake)","Milkshake",55,"ml","bebida","EST","1 vaso ≈ 300 ml ≈ 5,5 R","1 glass ≈ 300 ml ≈ 5.5 R",300],
+ ["granizado","Granizado","Slush (granizado)",60,"ml","bebida","EST","1 vaso ≈ 250 ml","1 glass ≈ 250 ml",250],
+ ["frappe","Café frappé / frappuccino","Frappuccino-type iced coffee",70,"ml","bebida","EST","1 vaso ≈ 350 ml","1 cup ≈ 350 ml",350],
  // Sin hidratos
  ["aguacate","Aguacate","Avocado",0,"g","libre","FD","","",100],
  ["carne","Carne (ternera, pollo, cerdo, cordero)","Meat (beef, chicken, pork, lamb)",0,"g","libre","FD","sin rebozar","not breaded",120],
@@ -404,9 +570,10 @@ const F = [
  ["aceitunas","Aceitunas","Olives",0,"g","libre","FD","","",30],
  ["cola_zero","Refresco sin azúcar / agua","Diet soft drink / water",0,"ml","libre","FD","","",330],
 ];
-const CATS = {pan:["Pan, galletas y cereales","Bread, biscuits & cereal"],cereal:["Arroz, pasta y harinas","Rice, pasta & flour"],legumbre:["Legumbres","Pulses"],patata:["Patata","Potato"],lacteo:["Lácteos","Dairy"],fruta:["Fruta","Fruit"],verdura:["Verdura","Vegetables"],seco:["Frutos secos","Nuts"],bebida:["Bebidas","Drinks"],dulce:["Dulces y platos","Sweets & dishes"],libre:["Sin hidratos (libre)","No carbs (free)"]};
-// Approximate energy, kcal per 100 g or 100 ml (typical values from BEDCA / USDA food composition tables).
-const KCAL = {"pan_blanco":270,"pan_integral":250,"pan_molde":265,"pan_centeno":250,"pan_hamb":280,"biscote":400,"picos":410,"tortilla_maiz":220,"maria":440,"digestive":480,"cereales":380,"allbran":330,"avena":370,"muesli":370,"arroz_crudo":360,"arroz_cocido":130,"arroz_int":120,"pasta_cruda":355,"pasta_cocida":155,"cuscus":110,"quinoa":120,"harina":350,"pan_rallado":380,"palomitas":450,"pizza":265,"lentejas_c":115,"lentejas_cr":330,"garbanzos_c":160,"judias_b":125,"guisantes":80,"maiz":80,"patata_herv":85,"patata_asada":140,"patata_frita":310,"chips":535,"pure":100,"boniato":90,"leche":50,"yog_nat":60,"yog_griego":120,"yog_azuc":95,"kefir":60,"queso_fresco":175,"cottage":100,"petit":120,"batido":75,"flan":130,"natillas":120,"helado":200,"manzana":52,"pera":55,"naranja":45,"mandarina":50,"melocoton":40,"nectarina":45,"kiwi":60,"kiwi_gold":65,"platano":90,"uva":70,"fresas":33,"frambuesas":50,"arandanos":57,"moras":45,"cerezas":63,"ciruela":46,"mango":60,"pina":50,"melon":34,"sandia":30,"higo":75,"albaricoque":48,"granada":80,"papaya":43,"chirimoya":75,"datil":280,"pasas":300,"melo_alm":70,"zanahoria":40,"zanahoria_h":35,"calabaza":26,"acelga":20,"judia_v":31,"berenjena":25,"brocoli":34,"coliflor":25,"coles_b":43,"calabacin":17,"tomate":20,"espinacas":23,"cebolla":40,"pimiento":25,"pepino":15,"remolacha":43,"alcachofa":47,"puerro":61,"gazpacho":50,"almendras":580,"avellanas":630,"cacahuetes":570,"pistachos":560,"nueces":650,"pipas":580,"zumo":45,"refresco":42,"isotonica":25,"horchata":70,"bebida_soja":40,"glucosa":380,"azucar":400,"miel":305,"mermelada":250,"nocilla":540,"choco_leche":535,"choco_negro":550,"croissant":410,"magdalena":420,"bizcocho":380,"donut":430,"barrita":400,"golosinas":340,"ketchup":110,"tomate_frito":80,"tortilla_pat":160,"croquetas":230,"sushi":150,"lasana":150,"aguacate":160,"carne":180,"pescado":120,"huevo":145,"jamon":200,"embutido":300,"queso_curado":380,"aceite":900,"mantequilla":740,"nata":300,"lechuga":18,"aceitunas":145,"cola_zero":0};
+const CATS = {pan:["Pan, galletas y cereales","Bread, biscuits & cereal"],cereal:["Arroz, pasta y harinas","Rice, pasta & flour"],legumbre:["Legumbres","Pulses"],patata:["Patata","Potato"],lacteo:["Lácteos","Dairy"],fruta:["Fruta","Fruit"],verdura:["Verdura","Vegetables"],seco:["Frutos secos","Nuts"],bebida:["Bebidas","Drinks"],dulce:["Dulces y bollería","Sweets & pastries"],salsa:["Salsas y untables","Sauces & spreads"],plato:["Platos, sushi y comida para llevar","Dishes, sushi & takeaway"],libre:["Sin hidratos (libre)","No carbs (free)"]};
+// Approximate energy: kcal per 100 g or 100 ml, or per piece for unit "pc" (typical values from BEDCA / USDA food composition tables).
+const KCAL = {"pan_blanco":270,"pan_integral":250,"pan_molde":265,"pan_centeno":250,"pan_hamb":280,"biscote":400,"picos":410,"tortilla_maiz":220,"maria":440,"digestive":480,"cereales":380,"allbran":330,"avena":370,"muesli":370,"arroz_crudo":360,"arroz_cocido":130,"arroz_int":120,"pasta_cruda":355,"pasta_cocida":155,"cuscus":110,"quinoa":120,"harina":350,"pan_rallado":380,"palomitas":450,"pizza":265,"lentejas_c":115,"lentejas_cr":330,"garbanzos_c":160,"judias_b":125,"guisantes":80,"maiz":80,"patata_herv":85,"patata_asada":140,"patata_frita":310,"chips":535,"pure":100,"boniato":90,"leche":50,"yog_nat":60,"yog_griego":120,"yog_azuc":95,"kefir":60,"queso_fresco":175,"cottage":100,"petit":120,"batido":75,"flan":130,"natillas":120,"helado":200,"manzana":52,"pera":55,"naranja":45,"mandarina":50,"melocoton":40,"nectarina":45,"kiwi":60,"kiwi_gold":65,"platano":90,"uva":70,"fresas":33,"frambuesas":50,"arandanos":57,"moras":45,"cerezas":63,"ciruela":46,"mango":60,"pina":50,"melon":34,"sandia":30,"higo":75,"albaricoque":48,"granada":80,"papaya":43,"chirimoya":75,"datil":280,"pasas":300,"melo_alm":70,"zanahoria":40,"zanahoria_h":35,"calabaza":26,"acelga":20,"judia_v":31,"berenjena":25,"brocoli":34,"coliflor":25,"coles_b":43,"calabacin":17,"tomate":20,"espinacas":23,"cebolla":40,"pimiento":25,"pepino":15,"remolacha":43,"alcachofa":47,"puerro":61,"gazpacho":50,"almendras":580,"avellanas":630,"cacahuetes":570,"pistachos":560,"nueces":650,"pipas":580,"zumo":45,"refresco":42,"isotonica":25,"horchata":70,"bebida_soja":40,"glucosa":380,"azucar":400,"miel":305,"mermelada":250,"nocilla":540,"choco_leche":535,"choco_negro":550,"croissant":410,"magdalena":420,"bizcocho":380,"donut":430,"barrita":400,"golosinas":340,"ketchup":110,"tomate_frito":80,"tortilla_pat":160,"croquetas":230,"sushi":150,"lasana":150,"aguacate":160,"carne":180,"pescado":120,"huevo":145,"jamon":200,"embutido":300,"queso_curado":380,"aceite":900,"mantequilla":740,"nata":300,"lechuga":18,"aceitunas":145,"cola_zero":0,"pan_payes":260,"pan_leche":330,"bagel":260,"pita":275,"wrap_trigo":300,"rebanada_molde":65,"biscote_pc":40,"tortita_arroz":30,"maria_pc":30,"digestive_pc":52,"principe_pc":72,"oreo_pc":53,"galleta_sin":430,"arroz_hinchado":380,"cereales_choco":390,"porridge":70,"tortita_amer":90,"gofre":140,"arroz_int_crudo":350,"arroz_salvaje":100,"pasta_int":130,"pasta_huevo":370,"gnocchi":150,"noodles":140,"fideos_arroz":110,"fideos_soja":100,"cuscus_crudo":360,"quinoa_cruda":370,"bulgur":85,"trigo_sarraceno":90,"cebada":120,"mijo":120,"semola_c":70,"tapioca":130,"maiz_sin":70,"polenta":70,"garbanzos_cr":360,"judias_cr":330,"judias_rojas":120,"soja_c":170,"edamame":120,"hummus":170,"falafel":330,"pure_copos":350,"patata_salteada":150,"bravas":220,"yuca":160,"cuajada":90,"yog_desn_sab":75,"yog_liquido":80,"actimel":70,"yog_nat_pc":75,"yog_azuc_pc":120,"petit_pc":65,"leche_cond":320,"leche_polvo":360,"helado_sin":150,"polo":90,"helado_choco":220,"cucurucho":45,"bebida_avena":45,"bebida_almendra":15,"caqui":70,"pomelo":40,"mandarina_pc":35,"litchi":66,"nispero":45,"grosella":45,"coco":350,"manzana_asada":90,"pina_conserva":60,"macedonia":65,"orejones":240,"ciruela_pasa":240,"higo_seco":250,"datil_pc":35,"castanas":200,"aros_cebolla":330,"setas":25,"repollo":25,"nabo":28,"rabano":16,"apio":16,"endibia":17,"brotes_soja":30,"palmitos":28,"zanahoria_lata":25,"crema_verdura":50,"salmorejo":120,"anacardos":570,"sesamo":570,"quicos":450,"lata_refresco":140,"brick_zumo":90,"brick_batido":150,"energetica":45,"tonica":38,"mosto":60,"limonada":40,"cacao_polvo":380,"cacao_puro":350,"glucosa_pc":21,"churros":400,"palmera":500,"ensaimada":410,"bolleria":420,"croissant_pc":245,"magdalena_pc":210,"donut_pc":250,"brownie":450,"tarta_choco":400,"tarta_manzana":260,"pastel_crema":300,"crema_pastelera":150,"gelatina":70,"natillas_pc":150,"turron":480,"mazapan":450,"caramelo":390,"regaliz":350,"merengue":390,"membrillo":270,"barrita_pc":100,"chocolatina":510,"crema_cacahuete":600,"bechamel":130,"barbacoa":170,"boloñesa":100,"teriyaki":120,"mayonesa":600,"pesto":450,"vinagre_modena":250,"hosomaki":35,"uramaki":50,"nigiri":55,"gyoza":45,"arroz_frito":170,"paella":160,"fideua":170,"macarrones_tomate":150,"espaguetis_bol":150,"lentejas_guiso":110,"canelones":150,"pizza_porcion":160,"mini_burger_pan":70,"burger_pan":220,"nuggets":50,"varitas":60,"croqueta_pc":70,"empanadilla_pc":120,"calamares":200,"rebozado":230,"nachos":500,"kebab_carne":220,"surimi":100,"smoothie_fruta":55,"smoothie_yogur":70,"batido_helado":110,"granizado":65,"frappe":70};
+const ALIAS = {"patata_frita": "fries french fries chips patatas fritas", "chips": "crisps patatas de bolsa", "patata_asada": "roasted potatoes oven potato patatas al horno asadas", "patata_salteada": "pan fried potatoes saltead", "patata_herv": "boiled potato cocida", "pure": "mashed potatoes", "hosomaki": "maki sushi roll", "uramaki": "maki sushi california roll", "nigiri": "sushi", "sushi": "maki nigiri", "smoothie_fruta": "smoothie batido zumo licuado", "smoothie_yogur": "smoothie batido", "batido_helado": "milkshake batido shake", "batido": "chocolate milk colacao cacao", "zumo": "juice orange naranja", "refresco": "soda coke cola fanta", "lata_refresco": "soda coke cola fanta can", "platano": "banana", "fresas": "strawberries fresones", "arandanos": "blueberries", "frambuesas": "raspberries", "pan_blanco": "bread baguette barra", "pan_integral": "bread wholemeal brown", "pan_molde": "bread toast sandwich bimbo", "rebanada_molde": "bread toast sandwich slice", "maria": "biscuits cookies galletas", "maria_pc": "biscuits cookies galletas", "helado": "ice cream gelato", "helado_choco": "ice cream gelato", "pasta_cocida": "spaghetti macaroni macarrones espaguetis penne", "pasta_cruda": "spaghetti macaroni macarrones espaguetis penne", "arroz_cocido": "rice", "arroz_frito": "fried rice", "mini_burger_pan": "slider burger hamburguesa bun", "burger_pan": "burger hamburguesa bun", "nuggets": "chicken nuggets pollo", "croissant": "croissant", "croissant_pc": "croissant", "glucosa": "dextro glucose tablets", "glucosa_pc": "dextro glucose tablet", "yog_nat": "yoghurt yogurt", "yog_azuc": "yoghurt yogurt", "leche": "milk"};
 const FOODS = {}; F.forEach(r=>{FOODS[r[0]]={key:r[0],es:r[1],en:r[2],g:r[3],unit:r[4],cat:r[5],src:r[6],hes:r[7],hen:r[8],def:r[9],kcal:KCAL[r[0]]}});
 
 // ---------- DEFAULT PLAN (23 Oct 2026) + ratios from the family's sheet
@@ -434,7 +601,7 @@ const T = {
   units:"unidades",unitsShort:"U",dose:"Humalog Junior",
   thMeal:"Comida",thPlanU:"Unidades pauta",thPlanR:"Raciones plan",thRatio:"U por R",thFrom:"Desde",thTo:"Hasta",thU:"Unidades",thThresh:"Umbral (mg/dL)",thDose:"Dosis si es mayor",
   base:"Raciones × ratio",corr:"Corrección por glucemia",total:"Total",rounded:"Redondeado a",noG:"Introduce la glucemia para aplicar la corrección.",
-  needTag:"Falta",night:"noche",atNight:"por la noche",barK:"Calorías",customKcal:"kcal por 100 g (opcional)",askH:"¿Cuál es su glucemia ahora?",askB:"La dosis depende de la corrección por glucemia. Mide o mira el sensor e introdúcela para ver las unidades.",askBtn:"Introducir glucemia",provisional:"Sin corrección (provisional)",barAsk:"¿Glucemia?",
+  needTag:"Falta",pcs:"uds",pc1:"unidad",night:"noche",atNight:"por la noche",barK:"Calorías",customKcal:"kcal por 100 g (opcional)",askH:"¿Cuál es su glucemia ahora?",askB:"La dosis depende de la corrección por glucemia. Mide o mira el sensor e introdúcela para ver las unidades.",askBtn:"Introducir glucemia",provisional:"Sin corrección (provisional)",barAsk:"¿Glucemia?",
   snackRule:"Regla: {d} U si la glucemia es mayor de {t}; si no, 0.",snackNeedG:"Introduce la glucemia: la dosis del almuerzo y la merienda depende de ella.",snackFood:"Raciones de esta toma (informativo)",
   hypoH:"Hipoglucemia: trátala primero",hypoB:"Dale 15 g de glucosa (3 pastillas o 150 ml de zumo) y repite la medición a los 15 minutos. Calcula la insulina cuando esté por encima de 70.",
   muchH:"Bastante más de lo habitual",muchB:"La pauta de {m} está pensada para {r} R y aquí hay {x} R. La dosis se ha escalado con el mismo ratio; confírmalo con el equipo si es frecuente.",
@@ -442,7 +609,7 @@ const T = {
   ratioH:"Cómo se calcula",ratioB:"Dosis = raciones × ratio de la comida (unidades de la pauta ÷ raciones del plan) + corrección según la glucemia. Escalar la dosis por raciones es una extrapolación de la pauta: confírmalo con el equipo médico.",
   cNeedG:"Introduce la glucemia actual.",cWait:"Espera: no han pasado 3 horas desde la última insulina rápida. Corregir antes puede provocar una hipoglucemia (insulina acumulada).",cNone:"No hace falta corrección: está por debajo del objetivo.",cFormula:"({g} − {t}) ÷ {isf}",cRoundDown:"Redondeado hacia abajo a",cNeedH:"Indica cuántas horas han pasado desde la última insulina rápida.",exact:"Cálculo exacto",
   src:{FD:"Fundación para la Diabetes",HM:"HM Nens",EST:"estimado"},perR:"g = 1 R",perRml:"ml = 1 R",label:"etiqueta"},
- en:{title:"Carbs and insulin",subtitle:"Insulin plan of 23 Oct 2026",tabMeal:"Meal",tabCorr:"Correction",tabSet:"Settings",whichMeal:"Which meal?",glucoseBefore:"Glucose before eating",foods:"Foods",searchPh:"Search food (bread, milk, kiwi…)",customTitle:"Add from a food label",customName:"Name",customNamePh:"e.g. wheat wrap",customCarbs:"Carbs per 100 g",customGrams:"Amount (g)",customAdd:"Add",
+ en:{title:"Carbs and insulin",subtitle:"Insulin plan of 23 Oct 2026",tabMeal:"Meal",tabCorr:"Correction",tabSet:"Settings",whichMeal:"Which meal?",glucoseBefore:"Glucose before eating",foods:"Foods",searchPh:"Search ~300 foods (bread, maki, kiwi…)",customTitle:"Add from a food label",customName:"Name",customNamePh:"e.g. wheat wrap",customCarbs:"Carbs per 100 g",customGrams:"Amount (g)",customAdd:"Add",
   corrHead:"Correction between meals",corrBody:"Only if at least 3 hours have passed since the last rapid insulin. 1 unit of Humalog Junior lowers glucose by about 100 mg/dL (sensitivity factor).",glucoseNow:"Glucose now",target:"Target (mg/dL)",hours:"Hours since last rapid insulin",
   setIntro:"Plan values. Change them only when the medical team changes the plan. They are saved on this phone.",setMeals:"Main meals",setSnacks:"Snacks and Lantus",setCorr:"Corrections before meals",setISF:"Sensitivity factor (mg/dL per unit)",setStep:"Dose rounding (units)",setSnackCorr:"Also apply the correction table to snacks",save:"Save",reset:"Back to the 23 Oct plan",saved:"Saved on this phone.",savedNot:"Applied, but this browser won't let it be saved.",resetDone:"23 Oct plan restored.",
   footSrc:"Raciones (1 R = 10 g carbohydrate): Fundación para la Diabetes table (Serafín Murillo), and the HM Nens table where they differ. Raw or cooked weights as stated; fruit weighed peeled and without stone.",footKcal:"Calories are approximate, from typical values in the BEDCA and USDA food composition tables; dishes and brands vary.",footSafe:"A calculation aid, not a substitute for the medical team. Always check the result before injecting.",
@@ -450,7 +617,7 @@ const T = {
   units:"units",unitsShort:"U",dose:"Humalog Junior",
   thMeal:"Meal",thPlanU:"Plan units",thPlanR:"Plan raciones",thRatio:"U per R",thFrom:"From",thTo:"To",thU:"Units",thThresh:"Threshold (mg/dL)",thDose:"Dose if above",
   base:"Raciones × ratio",corr:"Glucose correction",total:"Total",rounded:"Rounded to",noG:"Enter glucose to apply the correction.",
-  needTag:"Needed",night:"night",atNight:"at night",barK:"Calories",customKcal:"kcal per 100 g (optional)",askH:"What is his glucose now?",askB:"The dose depends on the glucose correction. Check the sensor or a finger-prick and enter it to see the units.",askBtn:"Enter glucose",provisional:"Without correction (provisional)",barAsk:"Glucose?",
+  needTag:"Needed",pcs:"pcs",pc1:"piece",night:"night",atNight:"at night",barK:"Calories",customKcal:"kcal per 100 g (optional)",askH:"What is his glucose now?",askB:"The dose depends on the glucose correction. Check the sensor or a finger-prick and enter it to see the units.",askBtn:"Enter glucose",provisional:"Without correction (provisional)",barAsk:"Glucose?",
   snackRule:"Rule: {d} U if glucose is above {t}; otherwise 0.",snackNeedG:"Enter glucose: the snack dose depends on it.",snackFood:"Raciones in this snack (for information)",
   hypoH:"Low glucose: treat it first",hypoB:"Give 15 g of glucose (3 tablets or 150 ml juice) and recheck after 15 minutes. Work out the insulin once he is above 70.",
   muchH:"Much more than usual",muchB:"The {m} plan is built for {r} R and this is {x} R. The dose has been scaled with the same ratio; check with the team if this is frequent.",
@@ -489,8 +656,10 @@ function itemR(it){
   if(it.custom) return (it.qty||0)*(it.carbs||0)/100/10;
   const f=FOODS[it.key]; if(!f||!f.g) return 0; return (it.qty||0)/f.g;
 }
+const unitLabel = u => u==="pc"? t("pcs") : u;
+const perRText = f => !f.g? t("free") : (f.unit==="pc"? `1 ${t("pc1")} ≈ ${fmt(1/f.g,1)} R` : `${f.g} ${f.unit} = 1 R`);
 function totalR(){ return state.items.reduce((a,it)=>a+itemR(it),0); }
-function itemKcal(it){ if(it.custom) return it.kcal==null? null : (it.qty||0)*it.kcal/100; const f=FOODS[it.key]; return f&&f.kcal!=null? (it.qty||0)*f.kcal/100 : null; }
+function itemKcal(it){ if(it.custom) return it.kcal==null? null : (it.qty||0)*it.kcal/100; const f=FOODS[it.key]; if(!f||f.kcal==null) return null; return f.unit==="pc"? (it.qty||0)*f.kcal : (it.qty||0)*f.kcal/100; }
 function totalKcal(){ return state.items.reduce((a,it)=>a+(itemKcal(it)||0),0); }
 const kc = n => n==null? "" : `≈ ${Math.round(n)} kcal`;
 
@@ -523,9 +692,10 @@ function renderItems(){
     const R=itemR(it);
     let name, sub, unit="g";
     if(it.custom){ name=esc(it.name||t("label")); sub=`${fmt(it.carbs,1)} g HC/100 g · ${t("label")}`; }
-    else { const f=FOODS[it.key]; name=f[lang]; unit=f.unit;
-      sub = f.g ? `${f.g} ${f.unit==="ml"?t("perRml"):t("perR")} · ${t("src")[f.src]}` : t("free");
-      const h = lang==="es"?f.hes:f.hen; if(h) sub += ` · ${h}`; }
+    else { const f=FOODS[it.key]; name=f[lang]; unit=unitLabel(f.unit);
+      const h = lang==="es"?f.hes:f.hen;
+      if(f.unit==="pc" && h){ sub = `${h} · ${t("src")[f.src]}`; }
+      else { sub = f.g ? `${perRText(f)} · ${t("src")[f.src]}` : t("free"); if(h) sub += ` · ${h}`; } }
     const isFree = !it.custom && !FOODS[it.key].g;
     html+=`<div class="item"><div class="name"><b>${name}</b><span>${sub}</span></div>
       <label class="qty"><input id="q-${it.id}" data-id="${it.id}" type="number" inputmode="decimal" value="${it.qty}" aria-label="${name}"><span>${unit}</span></label>
@@ -583,24 +753,41 @@ function renderDose(){
   $("barMeal").textContent = o.meal[lang];
   $("barU").textContent = o.needG? t("barAsk") : (o.dose==null? "—" : fmt(o.dose,1)+" U");
 }
-function renderAll(){ applyText(); renderMeals(); renderGlucoseState(); renderItems(); renderDose(); renderCorr(); renderSettings(); }
+function renderAll(){ applyText(); renderMeals(); renderBrowse(); renderGlucoseState(); renderItems(); renderDose(); renderCorr(); renderSettings(); }
 
 // ---------- SEARCH
+// Tolerant matching so everyday wording works: "roasted" finds "roast", "fries" finds "fries", "smoothies" finds "smoothie".
+function wordIn(hay,w){
+  const v=[w, w.replace(/ies$/,"y"), w.replace(/es$/,""), w.replace(/s$/,""), w.replace(/ed$/,""), w.replace(/d$/,""), w.replace(/(as|os)$/,"a"), w.replace(/(as|os)$/,"o")];
+  return v.some(x=>x.length>=3 ? hay.includes(x) : x===w && hay.includes(x));
+}
 function search(q){
   const n=norm(q.trim()); const box=$("results");
   if(!n){ box.hidden=true; box.innerHTML=""; return; }
   const words=n.split(/\s+/);
-  const hits=F.map(r=>FOODS[r[0]]).filter(f=>{ const hay=norm(f.es+" "+f.en+" "+f.key); return words.every(w=>hay.includes(w)); }).slice(0,30);
+  const hits=F.map(r=>FOODS[r[0]]).filter(f=>{ const hay=norm(f.es+" "+f.en+" "+f.key+" "+(ALIAS[f.key]||"")); return words.every(w=>wordIn(hay,w)); }).slice(0,40);
   if(!hits.length){ box.innerHTML=`<div class="empty">${lang==="es"?"Sin resultados. Usa “Añadir desde la etiqueta”.":"No match. Use “Add from a food label”."}</div>`; box.hidden=false; return; }
   let html="", lastCat="";
   hits.forEach((f,i)=>{ if(f.cat!==lastCat){ html+=`<div class="cat">${CATS[f.cat][lang==="es"?0:1]}</div>`; lastCat=f.cat; }
-    html+=`<button type="button" data-add="${f.key}"><span>${f[lang]}</span><span class="r">${f.g?`${f.g} ${f.unit} = 1 R`:t("free")}</span></button>`; });
+    html+=`<button type="button" data-add="${f.key}"><span>${f[lang]}</span><span class="r">${perRText(f)}</span></button>`; });
   box.innerHTML=html; box.hidden=false;
+}
+let browseCat=null;
+function renderBrowse(){
+  $("browse").innerHTML = Object.keys(CATS).map(c=>`<button type="button" data-cat="${c}" aria-pressed="${browseCat===c}">${CATS[c][lang==="es"?0:1]}</button>`).join("");
+}
+function showCat(c){
+  const box=$("results");
+  if(browseCat===c){ browseCat=null; box.hidden=true; renderBrowse(); return; }
+  browseCat=c; renderBrowse(); $("q").value="";
+  const hits=F.map(r=>FOODS[r[0]]).filter(f=>f.cat===c).sort((a,b)=>a[lang].localeCompare(b[lang],lang));
+  box.innerHTML=`<div class="cat">${CATS[c][lang==="es"?0:1]} · ${hits.length}</div>`+hits.map(f=>`<button type="button" data-add="${f.key}"><span>${f[lang]}</span><span class="r">${perRText(f)}</span></button>`).join("");
+  box.hidden=false; box.scrollTop=0;
 }
 function addFood(key){
   if(state.example){ state.items=[]; state.example=false; }
   const f=FOODS[key]; state.items.push({id:nextId++,key,qty:f.def});
-  $("q").value=""; $("results").hidden=true; renderItems(); renderDose();
+  $("q").value=""; $("results").hidden=true; browseCat=null; renderBrowse(); renderItems(); renderDose();
   const inp=document.getElementById("q-"+(nextId-1)); if(inp){ inp.focus(); inp.select(); }
 }
 
@@ -659,10 +846,11 @@ function showTab(which){
 document.addEventListener("click",e=>{
   const m=e.target.closest("[data-meal]"); if(m){ state.meal=m.dataset.meal; renderMeals(); renderDose(); return; }
   const a=e.target.closest("[data-add]"); if(a){ addFood(a.dataset.add); return; }
+  const bc=e.target.closest("[data-cat]"); if(bc){ showCat(bc.dataset.cat); return; }
   const d=e.target.closest("[data-del]"); if(d){ state.items=state.items.filter(i=>i.id!=d.dataset.del); if(!state.items.length) state.example=false; renderItems(); renderDose(); return; }
   if(e.target.id==="askG"){ const gi=$("glucose"); gi.scrollIntoView({behavior: matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth", block:"center"}); gi.focus({preventScroll:true}); return; }
   if(e.target.id==="clearEx"){ state.items=[]; state.example=false; renderItems(); renderDose(); return; }
-  if(!e.target.closest(".search")) $("results").hidden=true;
+  if(!e.target.closest(".search") && !e.target.closest(".browse")){ $("results").hidden=true; if(browseCat){ browseCat=null; renderBrowse(); } }
 });
 $("items").addEventListener("input",e=>{ const id=e.target.dataset.id; if(!id) return; const it=state.items.find(i=>i.id==id); if(!it) return;
   it.qty=parseFloat(e.target.value)||0; state.example=false;
@@ -671,7 +859,7 @@ $("items").addEventListener("input",e=>{ const id=e.target.dataset.id; if(!id) r
   const exb=document.querySelector(".examplebar"); if(exb) exb.remove();
   renderDose(); });
 $("glucose").addEventListener("input",e=>{ const v=parseFloat(e.target.value); state.glucose=isNaN(v)?null:v; renderGlucoseState(); renderDose(); });
-$("q").addEventListener("input",e=>search(e.target.value));
+$("q").addEventListener("input",e=>{ browseCat=null; renderBrowse(); search(e.target.value); });
 $("q").addEventListener("focus",e=>{ if(e.target.value) search(e.target.value); });
 $("q").addEventListener("keydown",e=>{ if(e.key==="Enter"){ const b=$("results").querySelector("[data-add]"); if(b){ e.preventDefault(); addFood(b.dataset.add);} } if(e.key==="Escape") $("results").hidden=true; });
 $("c-add").addEventListener("click",()=>{
